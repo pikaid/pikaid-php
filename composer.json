@@ -24,6 +24,10 @@
     "robinvdvleuten/ulid": "^5.0.0",
     "hidehalo/nanoid-php": "^2.0"
   },
+  "suggest": {
+    "ext-gmp": "Fastest Base36 conversions (recommended for best performance)",
+    "ext-bcmath": "Faster than pure-PHP fallback if GMP is unavailable"
+  },
   "scripts": {
     "test": "phpunit --configuration phpunit.xml.dist",
     "bench": "php benchmarks/PerformanceTest.php"
