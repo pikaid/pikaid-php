@@ -1,6 +1,6 @@
 {
   "name": "pikaid/pikaid-php",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Small · Sortable · Secure IDs",
   "type": "library",
   "license": "MIT",
