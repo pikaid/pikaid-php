@@ -14,8 +14,7 @@ Full specifications and other information are avalible at [pikaid/pikaid-specs](
 ## Requirements
 
 * PHP 7.4 or higher
-* ext-bcmath or ext-gmp (optional, recommended for performance)
-
+* ext-gmp or ext-bcmath or none of them (optional, recommended for performance, GMP is better)
 
 ## Installation
 
