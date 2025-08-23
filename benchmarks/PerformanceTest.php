@@ -1,70 +1,140 @@
 <?php
 
+declare(strict_types=1);
+
+set_time_limit(600); // 10 minutes
+
+/**
+ * Reproducible micro-benchmark harness (no PHPBench).
+ * - Global warm-up: 1 call per subject to pay autoload/JIT.
+ * - Per-subject warm-up before each measurement.
+ * - Multiple passes with randomized order.
+ * - Uses hrtime(true) and reports medians (µs/op) + ratios vs Pikaid.
+ */
+
 require __DIR__ . '/../vendor/autoload.php';
 
 use Pikaid\Pikaid;
 use Ramsey\Uuid\Uuid;
 use Ulid\Ulid;
-use Hidehalo\Nanoid\Client;
+use Hidehalo\Nanoid\Client as NanoidClient;
 
-function bench(callable $fn, int $iters = 100000): float
+// ---------- Config ----------
+const PASSES = 30; // number of independent samples per subject
+const REVS   = 60000; // iterations per measurement (>= 20k recommended)
+const WARMUP = 60000; // iterations for subject-specific warm-up
+// ----------------------------
+
+/** @return array<string, callable> */
+function buildSubjects(): array
 {
-  $start = microtime(true);
-  for ($i = 0; $i < $iters; $i++) {
-    $fn();
+  static $subjects = null;
+  if ($subjects !== null) {
+    return $subjects;
   }
-  return (microtime(true) - $start) * 1000; // total ms
+  $nanoid = new NanoidClient(); // reuse the client across calls
+
+  $subjects = [
+    'Pikaid' => fn() => Pikaid::generate(),
+    'UUIDv1' => fn() => Uuid::uuid1()->toString(),
+    'UUIDv4' => fn() => Uuid::uuid4()->toString(),
+    'UUIDv6' => fn() => Uuid::uuid6()->toString(),
+    'UUIDv7' => fn() => Uuid::uuid7()->toString(),
+    'ULID'   => fn() => (string) Ulid::generate(),
+    'NanoID' => fn() => $nanoid->generateId(),
+  ];
+  return $subjects;
 }
 
-$iters = 100000;
-$results = [];
-
-// Pikaid
-$time = bench(fn() => Pikaid::generate(), $iters);
-$us   = $time * 1000 / $iters;
-$results['Pikaid'] = ['ms' => $time, 'us' => $us];
-
-// UUIDv1
-$results['UUIDv1'] = ['ms' => $time = bench(fn() => Uuid::uuid1()->toString(), $iters)];
-$results['UUIDv1']['us'] = $results['UUIDv1']['ms'] * 1000 / $iters;
-
-// UUIDv4
-$results['UUIDv4'] = ['ms' => $time = bench(fn() => Uuid::uuid4()->toString(), $iters)];
-$results['UUIDv4']['us'] = $results['UUIDv4']['ms'] * 1000 / $iters;
-
-// UUIDv6
-$results['UUIDv6'] = ['ms' => $time = bench(fn() => Uuid::uuid6()->toString(), $iters)];
-$results['UUIDv6']['us'] = $results['UUIDv6']['ms'] * 1000 / $iters;
-
-// UUIDv7
-$results['UUIDv7'] = ['ms' => $time = bench(fn() => Uuid::uuid7()->toString(), $iters)];
-$results['UUIDv7']['us'] = $results['UUIDv7']['ms'] * 1000 / $iters;
-
-// ULID
-$results['ULID'] = ['ms' => $time = bench(fn() => (string) Ulid::generate(), $iters)];
-$results['ULID']['us'] = $results['ULID']['ms'] * 1000 / $iters;
-
-// NanoID
-$client = new Client();
-$results['NanoID'] = ['ms' => $time = bench(fn() => $client->generateId(), $iters)];
-$results['NanoID']['us'] = $results['NanoID']['ms'] * 1000 / $iters;
-
-// Compute ratios
-$pikaUs = $results['Pikaid']['us'];
-foreach ($results as $name => &$data) {
-  $data['ratio'] = $data['us'] / $pikaUs;
+function globalWarmup(): void
+{
+  foreach (buildSubjects() as $fn) {
+    // One quick call per subject to trigger autoload/JIT
+    $x = $fn();
+    if ($x === '') {
+      echo '';
+    }
+  }
 }
 
-// Display
-echo "Benchmarking {$iters} iterations:\n\n";
-printf("%-10s %10s %10s %8s\n", 'Library', 'Total ms', 'µs/op', 'Ratio');
-echo str_repeat('-', 44) . "\n";
-foreach ($results as $name => $data) {
-  printf(
-    "%-10s %10.2f %10.3f %8.2f\n",
-    $name,
-    $data['ms'],
-    $data['us'],
-    $data['ratio']
-  );
+function subjectWarmup(callable $fn, int $n = WARMUP): void
+{
+  for ($i = 0; $i < $n; $i++) {
+    $x = $fn();
+    if ($x === '') {
+      echo '';
+    }
+  }
 }
+
+/** Measure µs/op for a given subject (single sample). */
+function measure(callable $fn, int $n = REVS): float
+{
+  $t0 = hrtime(true);
+  for ($i = 0; $i < $n; $i++) {
+    $x = $fn();
+    if ($x === '') {
+      echo '';
+    }
+  }
+  $t1 = hrtime(true);
+  $ns_total = $t1 - $t0;
+  return ($ns_total / $n) / 1000.0; // µs/op
+}
+
+/** @param list<float> $vals */
+function median(array $vals): float
+{
+  sort($vals);
+  $c = count($vals);
+  if ($c === 0) return NAN;
+  $mid = intdiv($c, 2);
+  return ($c % 2) ? $vals[$mid] : (($vals[$mid - 1] + $vals[$mid]) / 2.0);
+}
+
+function run(): void
+{
+  $subjects = buildSubjects();
+
+  // Global warm-up (autoload/JIT)
+  globalWarmup();
+
+  // Collect samples
+  $samples = []; // name => list<float µs/op>
+  for ($p = 0; $p < PASSES; $p++) {
+    $order = array_keys($subjects);
+    shuffle($order); // randomized order each pass
+    foreach ($order as $name) {
+      $fn = $subjects[$name];
+      subjectWarmup($fn, WARMUP); // warm-up per subject
+      $us = measure($fn, REVS); // one sample (µs/op)
+      $samples[$name][] = $us;
+    }
+  }
+
+  // Compute medians
+  $medians = [];
+  foreach ($samples as $name => $vals) {
+    $medians[$name] = median($vals);
+  }
+
+  // Baseline = Pikaid
+  $baseline = $medians['Pikaid'] ?? NAN;
+
+  // Display
+  $iters = REVS;
+  $passes = PASSES;
+  echo "Benchmarking {$passes} passes × {$iters} iterations (per subject)\n";
+  echo "Warm-up per subject: " . WARMUP . " iterations\n\n";
+
+  printf("%-10s %14s %10s\n", 'Library', 'median µs/op', 'ratio');
+  echo str_repeat('-', 38) . "\n";
+  foreach ($medians as $name => $us) {
+    $ratio = (!is_nan($baseline) && $baseline > 0 && $name !== 'Pikaid')
+      ? $us / $baseline
+      : 1.0;
+    printf("%-10s %14.3f %10.3f\n", $name, $us, $ratio);
+  }
+}
+
+run();
