@@ -1,4 +1,45 @@
 <p align="center">
+  <h1>DigH@cktion - Medical Score Assistant</h1>
+</p>
+
+<p align="center">
+  <img alt="Static Badge" src="https://img.shields.io/badge/PikaID-%20PHP-blue?style=for-the-badge&logo=php">
+  <img alt="Static Badge" src="https://img.shields.io/badge/Unique-%20ID%20Generator-green?style=for-the-badge&logo=hashnode">
+  <img alt="Static Badge" src="https://img.shields.io/badge/Sortable-%20Chronological-orange?style=for-the-badge&logo=clockify">
+  <img alt="Static Badge" src="https://img.shields.io/badge/Secure-%20Crypto%20Entropy-red?style=for-the-badge&logo=securityscorecard">
+  <img alt="Static Badge" src="https://img.shields.io/badge/License-%20MIT-black?style=for-the-badge">
+</p>
+
+
+**PikaID** is a tiny PHP library that creates **unique, short, and sortable IDs** —  
+a modern alternative to UUIDs for your databases, APIs, and distributed systems.
+
+
+## 💡 Example Use Case
+
+Imagine you’re building a **web app** where users can post messages or create orders.  
+Each new item needs a **unique ID** so your system can recognize it.
+
+If you use normal numbers (`1, 2, 3…`), you can have **conflicts** when several servers create data at the same time.  
+If you use UUIDs, you get **long, messy IDs** that are hard to read and don’t follow creation time.
+
+**PikaID solves this:**
+- Every new ID is **unique**, even if many servers create them at once.  
+- IDs are **short**, so they look clean in URLs or logs.  
+- They are **time-ordered**, so when you list data, the newest appears last or first automatically.
+
+You can use PikaID to:
+- Identify **users**, **orders**, **invoices**, or **API resources**.  
+- Name **uploaded files** safely.  
+- Tag **events** or **logs** across distributed systems.  
+
+> **In short:** PikaID gives you clean, safe, and sortable IDs for anything that needs a unique reference.
+
+
+
+
+
+<p align="center">
   <img src="https://raw.githubusercontent.com/pikaid/pikaid-php/refs/heads/main/logo.png" alt="pikaid" width="300" />
 </p>
 
