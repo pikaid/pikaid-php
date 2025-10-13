@@ -1,5 +1,5 @@
 <p align="center">
-  <h1>DigH@cktion - Medical Score Assistant</h1>
+  <h1>PikaID</h1>
 </p>
 
 <p align="center">
