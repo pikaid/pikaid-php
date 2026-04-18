@@ -44,7 +44,7 @@ You can use PikaID to:
 # Pikaid (PHP)
 **Small · Sortable · Secure ID generator**
 
-This is the **official PHP implementation.** Fully compliant with v1.0.1.
+This is the **official PHP implementation.** Fully compliant with v1.0.3.
 
 Pikaid is a **26-character, lowercase Base36 identifier**, composed of:
 - **7-character timestamp** (seconds since epoch)
