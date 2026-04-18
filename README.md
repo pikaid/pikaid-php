@@ -361,3 +361,7 @@ This is an intentional choice: the goal is to keep the library easy to adopt in 
 For the exact legal terms, see the [LICENSE](LICENSE) file.
 
 ---
+
+## ✉️ Contact
+
+For licensing or project-related questions: [larananas.dev@proton.me](mailto:larananas.dev@proton.me)
