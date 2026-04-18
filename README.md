@@ -2,14 +2,12 @@
   <h1>PikaID</h1>
 </p>
 
-<p align="center">
-  <img alt="Static Badge" src="https://img.shields.io/badge/PikaID-%20PHP-blue?style=for-the-badge&logo=php">
-  <img alt="Static Badge" src="https://img.shields.io/badge/Unique-%20ID%20Generator-green?style=for-the-badge&logo=hashnode">
-  <img alt="Static Badge" src="https://img.shields.io/badge/Sortable-%20Chronological-orange?style=for-the-badge&logo=clockify">
-  <img alt="Static Badge" src="https://img.shields.io/badge/Secure-%20Crypto%20Entropy-red?style=for-the-badge&logo=securityscorecard">
-  <img alt="Static Badge" src="https://img.shields.io/badge/License-%20MIT-black?style=for-the-badge">
-</p>
+<div align="center">
 
+[![License: LGPL-3.0-or-later](https://img.shields.io/badge/license-LGPL--3.0--or--later-blue.svg)](LICENSE)
+[![PHP](https://img.shields.io/badge/PHP-modern-777bb4.svg)](#)
+
+</div>
 
 **PikaID** is a tiny PHP library that creates **unique, short, and sortable IDs** —  
 a modern alternative to UUIDs for your databases, APIs, and distributed systems.
@@ -347,8 +345,19 @@ assert(strcmp(Pikaid::toBinary($id1), Pikaid::toBinary($id2)) < 0); // Binary or
 
 ---
 
-## 📜 License
+## 📄 License
 
-Pikaid is released under the **MIT License**.
+PikaID is free software licensed under the **GNU Lesser General Public License, version 3 or any later version (`LGPL-3.0-or-later`)**.
+
+> **In practical terms:** you can use this library in both open-source and proprietary applications. You can integrate it into your own codebase, extend it, subclass it, and build commercial or closed-source software on top of it without having to release your whole application under the LGPL.
+
+The main condition is about the library itself:
+
+- if you distribute a modified version of **PikaID**,
+- those modifications to the library must remain available under the LGPL.
+
+This is an intentional choice: the goal is to keep the library easy to adopt in real-world PHP projects while ensuring that improvements to the core engine are contributed back when they are distributed.
+
+For the exact legal terms, see the [LICENSE](LICENSE) file.
 
 ---
