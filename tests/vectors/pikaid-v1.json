@@ -1,7 +1,6 @@
 {
   "meta": {
     "project": "pikaid",
-    "spec_version": "1.0.1",
     "string_length": 26,
     "timestamp": {
       "encoding": "base36-lower",
@@ -17,7 +16,9 @@
     "binary": {
       "bytes": 17,
       "layout": "[5 bytes timestamp big-endian][12 bytes entropy]"
-    }
+    },
+    "spec_revision": "1.0.4",
+    "identifier_format": "immutable and unversioned"
   },
   "valid": [
     {
@@ -70,6 +71,10 @@
       {
         "name": "non-base36",
         "id": "000000_0000000000000000000"
+      },
+      {
+        "name": "entropy-overflow",
+        "id": "0000000zzzzzzzzzzzzzzzzzzz"
       }
     ],
     "binary": [
@@ -84,6 +89,10 @@
       {
         "name": "timestamp-overflow",
         "bin_hex": "123ede4000000000000000000000000000"
+      },
+      {
+        "name": "timestamp-overflow-max-40-bit",
+        "bin_hex": "ffffffffff000000000000000000000000"
       }
     ]
   }

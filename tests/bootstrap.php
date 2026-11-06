@@ -2,18 +2,10 @@
 
 declare(strict_types=1);
 
-date_default_timezone_set('UTC');
-
-$autoloadCandidates = [
-    __DIR__ . '/../vendor/autoload.php',
-    __DIR__ . '/../../vendor/autoload.php',
-];
-
-foreach ($autoloadCandidates as $file) {
-    if (is_file($file)) {
-        require $file;
-        return;
-    }
+$vendorAutoload = __DIR__ . '/../vendor/autoload.php';
+if (is_file($vendorAutoload)) {
+    require_once $vendorAutoload;
+} else {
+    require_once __DIR__ . '/../src/PikaidException.php';
+    require_once __DIR__ . '/../src/Pikaid.php';
 }
-
-throw new RuntimeException('Could not find composer autoload.php. Run `composer install` first.');

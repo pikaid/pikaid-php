@@ -15,10 +15,10 @@ namespace Pikaid;
  * - Binary form is exactly 17 bytes
  * - Timestamp is 0 <= ts <= 36^7-1 (fits in 5 bytes big-endian)
  * - Randomness is exactly 12 bytes (96 bits), encoded as 19 base36 chars
- * - Lexicographic string order matches chronological order
+ * - Lexicographic order follows timestamps across different seconds
  * - String <-> Binary conversion is perfectly reversible
  *
- * @see https://github.com/pikaid/spec for full specification
+ * @see https://github.com/pikaid/pikaid-specs for the canonical specification
  */
 final class Pikaid
 {
@@ -75,8 +75,10 @@ final class Pikaid
     ];
 
     /** Cached extension availability - null means not checked yet */
-    private static ?bool $hasGmp = null;
-    private static ?bool $hasBcmath = null;
+    /** @var bool|null */
+    private static $hasGmp = null;
+    /** @var bool|null */
+    private static $hasBcmath = null;
 
     // =========================================================================
     // MUST APIs - Core spec-required functionality
@@ -171,10 +173,7 @@ final class Pikaid
 
         // Decode and validate timestamp
         $timestamp = self::base36ToInt($id, 0, self::TS_CHARS);
-        if ($timestamp > self::MAX_TIMESTAMP) {
-            throw PikaidException::timestampOverflow($timestamp, self::MAX_TIMESTAMP);
-        }
-
+        // Seven Base36 digits cannot exceed 36^7 - 1 (MAX_TIMESTAMP).
         // Decode entropy - this validates the base36 value fits in 12 bytes
         $entropy = self::base36ToBytes(\substr($id, self::TS_CHARS), self::ENTROPY_BYTES);
 
@@ -204,7 +203,7 @@ final class Pikaid
      * Check if a string has valid pikaid format (lighter check).
      *
      * Only validates: length = 26, all characters in [0-9a-z].
-     * Does NOT validate timestamp range - use isValid() for full spec compliance.
+     * Does NOT validate randomness overflow - use isValid() for full spec compliance.
      *
      * Use this when you need fast format validation and will do full validation later,
      * or when dealing with strings that might be pikaids but you're not sure.
@@ -251,10 +250,6 @@ final class Pikaid
     public static function fromBinary(string $binary): string
     {
         // Strict binary validation
-        if (!\is_string($binary)) {
-            throw PikaidException::invalidBinaryType(\gettype($binary));
-        }
-
         if (\strlen($binary) !== self::BINARY_LENGTH) {
             throw PikaidException::invalidBinaryLength(\strlen($binary), self::BINARY_LENGTH);
         }
@@ -338,20 +333,24 @@ final class Pikaid
     /**
      * Parse a pikaid into human-readable components.
      *
-     * Returns timestamp as DateTimeImmutable (UTC) and entropy as hex string.
-     * Use decode() instead if you need raw values without DateTime overhead.
+     * Returns the timestamp in UTC and randomness as lowercase hexadecimal.
+     * The entropy_hex key is retained for backward compatibility.
+     * Use decode() for primitive integer and binary values.
      *
-     * @return array{timestamp: \DateTimeImmutable, entropy_hex: string}
+     * @return array{timestamp: \DateTimeImmutable, randomness: string, entropy_hex: string}
      * @throws PikaidException If the input is not a valid pikaid
      */
     public static function parse(string $id): array
     {
         $parts = self::validateOrThrow($id);
 
+        $randomness = \bin2hex($parts['entropy']);
+
         return [
             'timestamp' => (new \DateTimeImmutable('@' . $parts['timestamp']))
                 ->setTimezone(new \DateTimeZone('UTC')),
-            'entropy_hex' => \bin2hex($parts['entropy']),
+            'randomness' => $randomness,
+            'entropy_hex' => $randomness, // Backward-compatible alias.
         ];
     }
 
@@ -368,10 +367,11 @@ final class Pikaid
     }
 
     /**
-     * Compare two pikaids chronologically.
+     * Compare two valid pikaids by their canonical bytewise string order.
      *
-     * Returns -1, 0, or 1 like strcmp()/spaceship operator.
-     * Since pikaid is lexicographically sortable, this is just strcmp.
+     * Values with different timestamps sort chronologically. Within the same
+     * second, the random suffix determines order (not generation sequence).
+     * Returns -1, 0, or 1 and avoids PHP numeric-string comparison rules.
      *
      * @throws PikaidException If either input is not a valid pikaid
      */
@@ -381,7 +381,7 @@ final class Pikaid
         self::validateOrThrow($a);
         self::validateOrThrow($b);
 
-        return $a <=> $b;
+        return \strcmp($a, $b) <=> 0;
     }
 
     // =========================================================================
@@ -525,7 +525,7 @@ final class Pikaid
 
         // Build decimal: for each byte, decimal = decimal * 256 + byte_value
         for ($i = 0; $i < $length; ++$i) {
-            $decimal = \bcadd(\bcmul($decimal, '256'), (string) \ord($bytes[$i]));
+            $decimal = \bcadd(\bcmul($decimal, '256', 0), (string) \ord($bytes[$i]), 0);
         }
 
         if ($decimal === '0') {
@@ -534,8 +534,8 @@ final class Pikaid
 
         // Convert decimal to base36 by repeated division
         $result = '';
-        while (\bccomp($decimal, '0') > 0) {
-            $remainder = (int) \bcmod($decimal, '36');
+        while (\bccomp($decimal, '0', 0) > 0) {
+            $remainder = (int) \bcmod($decimal, '36', 0);
             $result = self::ALPHABET[$remainder] . $result;
             $decimal = \bcdiv($decimal, '36', 0); // 0 = truncate, no decimals
         }
@@ -555,7 +555,7 @@ final class Pikaid
 
         // Build decimal from base36 digits
         for ($i = 0; $i < $strLen; ++$i) {
-            $decimal = \bcadd(\bcmul($decimal, '36'), (string) self::CHAR_VALUES[\ord($str[$i])]);
+            $decimal = \bcadd(\bcmul($decimal, '36', 0), (string) self::CHAR_VALUES[\ord($str[$i])], 0);
         }
 
         if ($decimal === '0') {
@@ -564,8 +564,8 @@ final class Pikaid
 
         // Convert decimal to bytes
         $result = '';
-        while (\bccomp($decimal, '0') > 0) {
-            $result = \chr((int) \bcmod($decimal, '256')) . $result;
+        while (\bccomp($decimal, '0', 0) > 0) {
+            $result = \chr((int) \bcmod($decimal, '256', 0)) . $result;
             $decimal = \bcdiv($decimal, '256', 0);
         }
 

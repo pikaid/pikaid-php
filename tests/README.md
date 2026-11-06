@@ -1,32 +1,29 @@
-# Universal test vectors for PikaID
+# pikaid conformance and regression tests
 
-This folder is designed to be copied into any language implementation.
+The identifier format is **immutable and unversioned**. The official normative reference is [pikaid-specs revision 1.0.4](https://github.com/pikaid/pikaid-specs/tree/v1.0.4).
 
-## What is "universal" here?
+`tests/vectors/pikaid-v1.json` is a historical filename, **not** an identifier format version. The vectors are retained for compatibility with existing test harnesses. Their metadata records the referenced specification revision. The format, encoded strings, and binary representations are unchanged.
 
-- The **source of truth** is `tests/vectors/pikaid-v1.json`.
-- Each language implements a tiny harness that reads the vectors and asserts:
-  - string <-> binary conversion is reversible
-  - parsing extracts the expected timestamp + entropy
-  - invalid inputs are rejected
+## Supported runtimes and test tooling
 
-## PHP (this repo)
+The library requires **64-bit PHP 7.3+**. PHPUnit 12 requires PHP 8.3+, so its developer dependencies are installed only on newer PHP. The standalone harness also runs on PHP 7.3/7.4 without Composer. GitHub Actions checks PHP 7.3/7.4 with the standalone harness and runs both harnesses on PHP 8.3/8.4.
 
-Run:
+## Run PHPUnit
 
 ```bash
 composer install
-vendor/bin/phpunit
+vendor/bin/phpunit --configuration phpunit.xml.dist
 ```
 
-The PHP runner is `tests/PikaidConformanceTest.php`.
+## Standalone validation (no Composer or PHPUnit required)
 
-## Porting to another language
+```bash
+php tests/verify.php
+php -n tests/verify.php  # Exercise pure-PHP conversion without optional extensions.
+```
 
-1. Copy `tests/vectors/pikaid-v1.json` (+ schema if you want).
-2. Write tests that iterate over:
-   - `valid[]`
-   - `invalid.string[]`
-   - `invalid.binary[]`
+This runs known-answer vectors, invalid inputs, boundary cases, and randomized round-trip/order checks using the currently installed PHP runtime. PHPUnit provides the maintained regression suite.
 
-Keep the test runner idiomatic for the language.
+## Porting the vectors
+
+Other language implementations may reuse `tests/vectors/pikaid-v1.json` and `tests/vectors/pikaid-v1.schema.json`. They must verify successful string-to-binary and binary-to-string conversions, timestamp/randomness extraction, and rejection of malformed or out-of-range values. Do not infer an identifier version from the vector filenames.

@@ -1,78 +1,51 @@
 <p align="center">
-  <h1>PikaID</h1>
+  <img src="https://raw.githubusercontent.com/pikaid/pikaid-php/refs/heads/main/logo.png" alt="pikaid" width="300" />
 </p>
 
+
+<p align="center">
+  <strong>Small · Sortable · Secure ID generator</strong>
+</p>
+
+
 <div align="center">
-  
+
+
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP](https://img.shields.io/badge/PHP-modern-777bb4.svg)](#)
 
 </div>
 
-**PikaID** is a tiny PHP library that creates **unique, short, and sortable IDs** —  
-a modern alternative to UUIDs for your databases, APIs, and distributed systems.
+**pikaid** is a lightweight PHP library for generating **compact, chronologically sortable, collision-resistant IDs** for databases, APIs, and distributed systems.
 
+This is the **official PHP implementation** of the immutable, unversioned [pikaid format](https://github.com/pikaid/pikaid-specs), documented in specification revision **1.0.4**.
 
-## 💡 Example Use Case
+## ✨ Why pikaid?
 
-Imagine you’re building a **web app** where users can post messages or create orders.  
-Each new item needs a **unique ID** so your system can recognize it.
+- **Short:** Compact, readable identifiers for URLs, logs, and API resources.
+- **Sortable:** Lexicographical ordering by creation timestamp, with **one-second precision**.
+- **Collision-resistant:** Cryptographically secure randomness makes collisions extremely unlikely across independent generators, but never mathematically impossible.
+- **Storage-friendly:** Use human-readable `CHAR(26)` or compact `BINARY(17)`.
+- **Distributed-friendly:** Generate IDs independently without requiring a central sequence allocator.
 
-If you use normal numbers (`1, 2, 3…`), you can have **conflicts** when several servers create data at the same time.  
-If you use UUIDs, you get **long, messy IDs** that are hard to read and don’t follow creation time.
+## 🧬 Identifier format
 
-**PikaID solves this:**
-- Every new ID is **unique**, even if many servers create them at once.  
-- IDs are **short**, so they look clean in URLs or logs.  
-- They are **time-ordered**, so when you list data, the newest appears last or first automatically.
+Each pikaid is a **26-character lowercase Base36 identifier**, composed of:
 
-You can use PikaID to:
-- Identify **users**, **orders**, **invoices**, or **API resources**.  
-- Name **uploaded files** safely.  
-- Tag **events** or **logs** across distributed systems.  
-
-> **In short:** PikaID gives you clean, safe, and sortable IDs for anything that needs a unique reference.
-
-
-
-
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/pikaid/pikaid-php/refs/heads/main/logo.png" alt="pikaid" width="300" />
-</p>
-
-# Pikaid (PHP)
-**Small · Sortable · Secure ID generator**
-
-This is the **official PHP implementation** of pikaid, defined by the [canonical specification](https://github.com/pikaid/pikaid-specs) (revision 1.0.3). The identifier format itself is immutable and unversioned.
-
-Pikaid is a **26-character, lowercase Base36 identifier**, composed of:
-- **7-character timestamp** (seconds since epoch)
+- **7-character timestamp** (seconds since the Unix epoch)
 - **19-character cryptographically secure randomness**
 
-It’s a **modern, compact alternative** to UUID and ULID:
-- Lexicographically sortable
-- Collision-resistant
-- Compact binary form (`BINARY(17)`)
+The binary representation uses **5 bytes for the timestamp** (unsigned 40-bit, big-endian) and **12 bytes for randomness**, for a total of **17 bytes**.
 
-![pikaid structure](https://raw.githubusercontent.com/pikaid/pikaid-php/refs/heads/main/structure.png)
+![pikaid identifier anatomy](https://raw.githubusercontent.com/pikaid/pikaid-specs/v1.0.4/structure.svg)
 
----
-
-## 📚 Specifications & Benchmarks
-See the full technical specs and benchmarks at
-[**pikaid/pikaid-specs**](https://github.com/pikaid/pikaid-specs)
-
-
-
----
+> **Ordering guarantee:** IDs from different seconds sort chronologically. IDs created within the same second sort by their random suffix, **not** by generation order.
 
 ## ⚙️ Requirements
-- PHP **7.3+** (PHP 8 recommended)
+
+- PHP **7.3+ on 64-bit platforms** (PHP 8 recommended)
 - `ext-gmp` *(recommended for best performance)* or `ext-bcmath` *(optional)*
 - If neither extension is installed, a pure-PHP fallback is used.
-
----
 
 ## 📦 Installation
 
@@ -87,8 +60,6 @@ Include Composer's autoloader in your project:
 ```php
 require 'vendor/autoload.php';
 ```
-
----
 
 ## 🚀 Basic Usage
 
@@ -109,8 +80,29 @@ if (Pikaid::isValid($id)) {
 // Parse components
 $data = Pikaid::parse($id);
 echo "Timestamp: " . $data['timestamp']->format('Y-m-d H:i:s') . " UTC\n";
-echo "Randomness (hex): {$data['entropy_hex']}\n";
+echo "Randomness (hex): {$data['randomness']}\n";
 ```
+
+## 💡 Example Use Case
+
+Imagine a web app where users post messages or place orders. Each user, message, or order needs a unique identifier.
+
+Traditional UUIDv4 values are longer and random, so they do not naturally sort by creation time. Independently generated numeric sequences can also conflict across servers unless the generators coordinate.
+
+With pikaid, you can generate short, collision-resistant identifiers independently and sort them by timestamp (to the nearest second).
+
+Typical uses include:
+
+- Identifying **users**, **orders**, **invoices**, and **API resources**.
+- Naming **uploaded files** with opaque identifiers.
+- Tagging **events** and **logs** across distributed systems.
+
+## 📚 Canonical specification
+
+The pikaid identifier format is immutable and unversioned.
+
+- [Canonical specification](https://github.com/pikaid/pikaid-specs)
+- [Specification revision 1.0.4](https://github.com/pikaid/pikaid-specs/tree/v1.0.4)
 
 ---
 
@@ -144,7 +136,7 @@ $bin = Pikaid::generateBinary();
 ### **`Pikaid::toBinary(string $id): string`**
 
 Convert a **string ID** to its **binary (17 bytes)** representation.
-Throws `InvalidArgumentException` if the input is not a valid 26-character Pikaid or if the timestamp is out of range.
+Throws `PikaidException` (a subtype of `InvalidArgumentException`) if the input is invalid.
 
 ```php
 $bin = Pikaid::toBinary($id);
@@ -155,7 +147,7 @@ $bin = Pikaid::toBinary($id);
 ### **`Pikaid::fromBinary(string $bin): string`**
 
 Convert **binary (17 bytes)** back into a **26-char string**.
-Throws `InvalidArgumentException` if the binary length isn’t exactly 17 bytes.
+Throws `PikaidException` (a subtype of `InvalidArgumentException`) for an invalid binary length or timestamp.
 
 ```php
 $id = Pikaid::fromBinary($bin);
@@ -165,16 +157,18 @@ $id = Pikaid::fromBinary($bin);
 
 ### **`Pikaid::isValid(string $id): bool`**
 
-Check if the given string is a **valid Pikaid**.
+Check if the given string is a **fully valid pikaid** (not only well-formed).
 
-* Must be exactly **26 lowercase Base36 characters** (`[0-9a-z]`).
-* Must contain a valid timestamp and a randomness value within the specification's allowed ranges.
+* Must be **26 chars** long
+* Must use only lowercase Base36 characters and decode to a randomness value within the 96-bit range
 
 ```php
 if (Pikaid::isValid($id)) {
-    echo "Valid format!";
+    echo "Valid ID!";
 }
 ```
+
+**`Pikaid::isWellFormed(string $id): bool`** checks only length and character set. It does not verify the 96-bit randomness bound; use `isValid()` for full validation.
 
 ---
 
@@ -183,9 +177,9 @@ if (Pikaid::isValid($id)) {
 Parse a **string ID** into its components:
 
 * `timestamp` → `DateTimeImmutable` (UTC)
-* `entropy_hex` → lowercase hex string (24 chars = 12 bytes)
+* `randomness` → lowercase hex string (24 chars = 12 bytes); `entropy_hex` remains as a compatibility alias
 
-Throws `InvalidArgumentException` on invalid input.
+Throws `PikaidException` (a subtype of `InvalidArgumentException`) on invalid input.
 
 ```php
 $info = Pikaid::parse($id);
@@ -209,6 +203,25 @@ $id = Pikaid::fromDateTime(new DateTimeImmutable('@1234567890'));
 
 ---
 
+### Additional public methods
+
+All methods accepting a pikaid string perform strict validation. Invalid input raises `PikaidException`, which extends `InvalidArgumentException`.
+
+| Method                                                       | Purpose                                                      |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `Pikaid::generateWithTimestamp(int $timestamp): string`      | Generate an ID using a specified Unix timestamp in seconds and fresh cryptographic randomness. |
+| `Pikaid::generateBinaryWithTimestamp(int $timestamp): string` | Generate the 17-byte representation for the specified timestamp with fresh randomness. |
+| `Pikaid::validateOrThrow(string $id): array`                 | Validate strictly and return `['timestamp' => int, 'entropy' => string]`, where `entropy` contains 12 raw bytes. |
+| `Pikaid::decode(string $id): array`                          | Return `[int $timestamp, string $entropyBytes]` without allocating a `DateTimeImmutable`. |
+| `Pikaid::getTimestamp(string $id): int`                      | Extract the Unix timestamp in seconds.                       |
+| `Pikaid::getEntropyBytes(string $id): string`                | Extract exactly 12 randomness bytes.                         |
+| `Pikaid::getEntropyHex(string $id): string`                  | Extract the randomness as 24 lowercase hexadecimal characters. |
+| `Pikaid::compare(string $a, string $b): int`                 | Strictly validate and compare identifiers using canonical bytewise string ordering; returns `-1`, `0`, or `1`. |
+
+`compare()` sorts by timestamp across different seconds. Within the same second, comparison follows the random suffix, **not generation order**.
+
+---
+
 ## 🔄 Order Guarantee
 
 * String and binary representations **sort lexicographically by second**:
@@ -217,7 +230,7 @@ $id = Pikaid::fromDateTime(new DateTimeImmutable('@1234567890'));
 $id1 = Pikaid::generate();
 sleep(1);
 $id2 = Pikaid::generate();
-assert($id1 < $id2); // always true
+assert(strcmp($id1, $id2) < 0); // different timestamps: earlier sorts first
 ```
 
 ---
@@ -242,6 +255,7 @@ Binary form stores exactly **17 bytes**:
 ```
 
 #### Table Definition
+
 ```sql
 CREATE TABLE pika_events (
   id BINARY(17) NOT NULL, -- Primary key
@@ -341,7 +355,7 @@ $id1 = Pikaid::generate();
 sleep(1);
 $id2 = Pikaid::generate();
 
-assert($id1 < $id2); // String order is chronological
+assert(strcmp($id1, $id2) < 0); // different timestamps: earlier sorts first
 assert(strcmp(Pikaid::toBinary($id1), Pikaid::toBinary($id2)) < 0); // Binary order too
 ```
 
@@ -351,9 +365,9 @@ assert(strcmp(Pikaid::toBinary($id1), Pikaid::toBinary($id2)) < 0); // Binary or
 
 pikaid-php is open-source software licensed under the **MIT License**.
 
-You are free to use, copy, modify, distribute, and sublicense the library, including in commercial and proprietary applications, subject to the terms of the license.
+You may use, copy, modify, distribute, and sublicense this library, including in commercial and proprietary applications, subject to the license terms.
 
-For the complete license terms, see the [LICENSE](LICENSE) file.
+See [LICENSE](LICENSE) for the full legal text.
 
 ---
 

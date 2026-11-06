@@ -1,6 +1,5 @@
 {
   "name": "pikaid/pikaid-php",
-  "version": "1.1.1",
   "description": "Official PHP implementation of pikaid — 26-character sortable Base36 identifiers with 96-bit cryptographic randomness and 17-byte binary storage.",
   "keywords": [
     "pikaid",
@@ -24,10 +23,10 @@
     }
   },
   "require": {
-    "php": ">=7.3"
+    "php": ">=7.3",
+    "php-64bit": "*"
   },
   "require-dev": {
-    "php": ">=8.3",
     "phpunit/phpunit": "^12.1.5",
     "ramsey/uuid": "^4.7.6",
     "robinvdvleuten/ulid": "^5.0.0",
