@@ -16,7 +16,7 @@ Changes to the **PHP implementation** are recorded here. The pikaid identifier f
 ### Added
 
 - `PikaidException` with descriptive error codes, and additional validation, extraction, and timestamp-specific public methods.
-- A canonical `randomness` key from `parse()` while retaining `entropy_hex` as a compatibility alias.
+- Preserve the existing `parse()['randomness']` key and add `entropy_hex` as a compatibility alias.
 - Portable conformance vectors, additional overflow cases, a standalone verification harness, and PHPUnit regression coverage.
 - GitHub Actions checks for PHP 7.3/7.4 (standalone) and PHP 8.3/8.4 (PHPUnit and standalone).
 
@@ -25,4 +25,3 @@ Changes to the **PHP implementation** are recorded here. The pikaid identifier f
 - `PikaidException` extends `InvalidArgumentException`, so existing catches of that parent type continue to work.
 - `isValid()` now validates the full identifier, including the 96-bit randomness bound, whereas older releases only checked the string shape. Use `isWellFormed()` for shape-only checks.
 - `parse()` adds a compatibility key; consumers depending on an exact two-key array shape should review their assumptions.
-- This changelog entry describes work awaiting publication. **No Git tag or PHP package release is created by this archive.**
