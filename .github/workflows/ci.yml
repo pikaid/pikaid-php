@@ -55,4 +55,4 @@ jobs:
       - name: Standalone conformance
         run: php tests/verify.php
       - name: Pure PHP fallback conformance
-        run: php -n tests/verify.php
+        run: php -n -d extension=json tests/verify.php
