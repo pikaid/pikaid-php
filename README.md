@@ -3,8 +3,8 @@
 </p>
 
 <div align="center">
-
-[![License: LGPL-3.0-or-later](https://img.shields.io/badge/license-LGPL--3.0--or--later-blue.svg)](LICENSE)
+  
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP](https://img.shields.io/badge/PHP-modern-777bb4.svg)](#)
 
 </div>
@@ -44,7 +44,7 @@ You can use PikaID to:
 # Pikaid (PHP)
 **Small · Sortable · Secure ID generator**
 
-This is the **official PHP implementation.** Fully compliant with v1.0.3.
+This is the **official PHP implementation** of pikaid, defined by the [canonical specification](https://github.com/pikaid/pikaid-specs) (revision 1.0.3). The identifier format itself is immutable and unversioned.
 
 Pikaid is a **26-character, lowercase Base36 identifier**, composed of:
 - **7-character timestamp** (seconds since epoch)
@@ -68,7 +68,7 @@ See the full technical specs and benchmarks at
 ---
 
 ## ⚙️ Requirements
-- PHP **7.4+** (PHP 8 recommended)
+- PHP **7.3+** (PHP 8 recommended)
 - `ext-gmp` *(recommended for best performance)* or `ext-bcmath` *(optional)*
 - If neither extension is installed, a pure-PHP fallback is used.
 
@@ -109,7 +109,7 @@ if (Pikaid::isValid($id)) {
 // Parse components
 $data = Pikaid::parse($id);
 echo "Timestamp: " . $data['timestamp']->format('Y-m-d H:i:s') . " UTC\n";
-echo "Randomness (hex): {$data['randomness']}\n";
+echo "Randomness (hex): {$data['entropy_hex']}\n";
 ```
 
 ---
@@ -167,8 +167,8 @@ $id = Pikaid::fromBinary($bin);
 
 Check if the given string is a **valid Pikaid**.
 
-* Must be **26 chars** long
-* Must match regex: `/^[0-9a-z]{26}$/`
+* Must be exactly **26 lowercase Base36 characters** (`[0-9a-z]`).
+* Must contain a valid timestamp and a randomness value within the specification's allowed ranges.
 
 ```php
 if (Pikaid::isValid($id)) {
@@ -183,7 +183,7 @@ if (Pikaid::isValid($id)) {
 Parse a **string ID** into its components:
 
 * `timestamp` → `DateTimeImmutable` (UTC)
-* `randomness` → lowercase hex string (24 chars = 12 bytes)
+* `entropy_hex` → lowercase hex string (24 chars = 12 bytes)
 
 Throws `InvalidArgumentException` on invalid input.
 
@@ -349,18 +349,11 @@ assert(strcmp(Pikaid::toBinary($id1), Pikaid::toBinary($id2)) < 0); // Binary or
 
 ## 📄 License
 
-PikaID is free software licensed under the **GNU Lesser General Public License, version 3 or any later version (`LGPL-3.0-or-later`)**.
+pikaid-php is open-source software licensed under the **MIT License**.
 
-> **In practical terms:** you can use this library in both open-source and proprietary applications. You can integrate it into your own codebase, extend it, subclass it, and build commercial or closed-source software on top of it without having to release your whole application under the LGPL.
+You are free to use, copy, modify, distribute, and sublicense the library, including in commercial and proprietary applications, subject to the terms of the license.
 
-The main condition is about the library itself:
-
-- if you distribute a modified version of **PikaID**,
-- those modifications to the library must remain available under the LGPL.
-
-This is an intentional choice: the goal is to keep the library easy to adopt in real-world PHP projects while ensuring that improvements to the core engine are contributed back when they are distributed.
-
-For the exact legal terms, see the [LICENSE](LICENSE) file.
+For the complete license terms, see the [LICENSE](LICENSE) file.
 
 ---
 
