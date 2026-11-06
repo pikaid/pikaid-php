@@ -1,9 +1,18 @@
 {
   "name": "pikaid/pikaid-php",
   "version": "1.1.1",
-  "description": "Small · Sortable · Secure IDs",
+  "description": "Official PHP implementation of pikaid — 26-character sortable Base36 identifiers with 96-bit cryptographic randomness and 17-byte binary storage.",
+  "keywords": [
+    "pikaid",
+    "identifier",
+    "unique-id",
+    "sortable-id",
+    "base36",
+    "uuid",
+    "ulid"
+  ],
   "type": "library",
-  "license": "LGPL-3.0-or-later",
+  "license": "MIT",
   "autoload": {
     "psr-4": {
       "Pikaid\\": "src/"
