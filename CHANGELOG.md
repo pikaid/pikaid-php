@@ -2,7 +2,7 @@
 
 Changes to the **PHP implementation** are recorded here. The pikaid identifier format remains immutable and unversioned; specification revisions are separate from PHP package releases.
 
-## Unreleased (proposed PHP package release: v1.2.0)
+## 1.2.0 - 2026-11-06
 
 ### Changed
 

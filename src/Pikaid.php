@@ -33,7 +33,7 @@ final class Pikaid
     public const BINARY_LENGTH = 17;
 
     /** Maximum valid timestamp value (36^7 - 1), covers until ~year 4453 */
-    public const MAX_TIMESTAMP = 78_364_164_095;
+    public const MAX_TIMESTAMP = 78364164095;
 
     // =========================================================================
     // Internal Layout Constants
