@@ -19,10 +19,18 @@ vendor/bin/phpunit --configuration phpunit.xml.dist
 
 ```bash
 php tests/verify.php
-php -n tests/verify.php  # Exercise pure-PHP conversion without optional extensions.
+php -n tests/verify.php
 ```
 
-This runs known-answer vectors, invalid inputs, boundary cases, and randomized round-trip/order checks using the currently installed PHP runtime. PHPUnit provides the maintained regression suite.
+This runs known-answer vectors, invalid inputs, boundary cases, and randomized round-trip/order checks using the currently installed PHP runtime. The final line reports the runtime and the active conversion backends, for example `PASS: ... (PHP 8.3.0; GMP yes; BCMath yes)`, so the path actually exercised is observable.
+
+`php -n` ignores `php.ini`, so extensions loaded from configuration are absent. It does **not** guarantee the pure-PHP fallback when GMP/BCMath are compiled statically into the binary (some distribution and Homebrew builds). Check before relying on it:
+
+```bash
+php -n -r 'printf("gmp=%s bcmath=%s\n", extension_loaded("gmp") ? "yes" : "no", extension_loaded("bcmath") ? "yes" : "no");'
+```
+
+Use a runtime that reports `gmp=no bcmath=no` for genuine pure-PHP coverage, or force the backend through the parity test in `tests/PikaidBehaviorTest.php`. PHPUnit provides the maintained regression suite.
 
 ## Porting the vectors
 
