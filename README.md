@@ -41,6 +41,8 @@ The binary representation uses **5 bytes for the timestamp** (unsigned 40-bit, b
 
 > **Ordering guarantee:** IDs from different seconds sort chronologically. IDs created within the same second sort by their random suffix, **not** by generation order.
 
+> **Security note:** pikaid values are identifiers, **not secrets**. Do not use them as session credentials, password-reset tokens, authorization tokens, or API keys. The 96-bit random suffix makes collisions probabilistically negligible, but not mathematically impossible, and same-second ordering is not an issuance or audit-order guarantee.
+
 ## ⚙️ Requirements
 
 - PHP **7.3+ on 64-bit platforms** (PHP 8 recommended)

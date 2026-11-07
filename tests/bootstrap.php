@@ -9,3 +9,5 @@ if (is_file($vendorAutoload)) {
     require_once __DIR__ . '/../src/PikaidException.php';
     require_once __DIR__ . '/../src/Pikaid.php';
 }
+
+require_once __DIR__ . '/IndependentOracle.php';

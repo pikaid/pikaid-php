@@ -6,6 +6,7 @@ require_once __DIR__ . '/bootstrap.php';
 
 use Pikaid\Pikaid;
 use Pikaid\PikaidException;
+use Pikaid\Tests\IndependentOracle;
 
 $checks = 0;
 $verify = static function (bool $condition, string $description) use (&$checks): void {
@@ -23,21 +24,58 @@ $rejects = static function (callable $operation, string $description) use ($veri
     }
     $verify($rejected, $description);
 };
+$rejectsWithCode = static function (callable $operation, int $code, string $description) use ($verify): void {
+    try {
+        $operation();
+    } catch (PikaidException $e) {
+        $verify($e->getCode() === $code, $description . ' (expected code ' . $code . ', got ' . $e->getCode() . ')');
+        return;
+    }
+    $verify(false, $description . ' (not rejected)');
+};
 
-$vectors = json_decode(file_get_contents(__DIR__ . '/vectors/pikaid-v1.json'), true, 512, JSON_THROW_ON_ERROR);
+$vectorsPath = __DIR__ . '/vectors/pikaid-v1.json';
+$rawVectors = file_get_contents($vectorsPath);
+if ($rawVectors === false) {
+    throw new RuntimeException('Cannot read conformance vectors.');
+}
+
+// Lock the official fixture bytes so accidental edits cannot silently weaken conformance.
+$verify(
+    hash('sha256', $rawVectors) === 'b0c9dfdd063613424414fef5c9065fbd2f81d645d0ab42b34e27cde715613500',
+    'pikaid-v1.json checksum'
+);
+$verify(
+    hash('sha256', (string) file_get_contents(__DIR__ . '/vectors/pikaid-v1.schema.json'))
+        === '4441d4dbaa6c5450ae9cbfb2438c53bc0421bba2b7fcc9ef9b158e5d1de0759e',
+    'pikaid-v1.schema.json checksum'
+);
+
+$vectors = json_decode($rawVectors, true, 512, JSON_THROW_ON_ERROR);
 $verify($vectors['meta']['spec_revision'] === '1.0.4', 'revision metadata');
+$verify($vectors['meta']['string_length'] === 26, 'string length metadata');
+$verify($vectors['meta']['entropy']['bytes'] === 12, 'entropy byte metadata');
+$verify($vectors['meta']['binary']['bytes'] === 17, 'binary byte metadata');
+$verify($vectors['meta']['timestamp']['max'] === Pikaid::MAX_TIMESTAMP, 'timestamp maximum metadata');
 foreach ($vectors['valid'] as $case) {
     $id = $case['id'];
     $binary = hex2bin($case['bin_hex']);
+    $entropy = hex2bin($case['entropy_hex']);
     $verify(is_string($binary), 'binary vector hex');
+    $verify(is_string($entropy), 'entropy vector hex');
     $verify(Pikaid::isValid($id), $case['name'] . '/valid');
     $verify(Pikaid::toBinary($id) === $binary, $case['name'] . '/toBinary');
     $verify(Pikaid::fromBinary($binary) === $id, $case['name'] . '/fromBinary');
     $verify(Pikaid::getTimestamp($id) === $case['timestamp'], $case['name'] . '/timestamp');
     $verify(Pikaid::getEntropyHex($id) === $case['entropy_hex'], $case['name'] . '/randomness');
+    $verify(Pikaid::getEntropyBytes($id) === $entropy, $case['name'] . '/entropy bytes');
+    $verify(IndependentOracle::encode($case['timestamp'], $entropy) === $id, $case['name'] . '/independent string oracle');
+    $verify(IndependentOracle::binary($case['timestamp'], $entropy) === $binary, $case['name'] . '/independent binary oracle');
     $parsed = Pikaid::parse($id);
+    $verify(array_keys($parsed) === ['timestamp', 'randomness', 'entropy_hex'], $case['name'] . '/parse keys');
     $verify($parsed['randomness'] === $case['entropy_hex'], $case['name'] . '/parse randomness');
     $verify($parsed['entropy_hex'] === $parsed['randomness'], $case['name'] . '/legacy alias');
+    $verify($parsed['timestamp'] instanceof DateTimeImmutable, $case['name'] . '/immutable timestamp');
     $verify($parsed['timestamp']->getTimezone()->getName() === 'UTC', $case['name'] . '/utc');
 }
 foreach ($vectors['invalid']['string'] as $case) {
@@ -51,9 +89,84 @@ foreach ($vectors['invalid']['binary'] as $case) {
     $verify(is_string($binary), 'invalid binary vector hex');
     $rejects(static function () use ($binary): void { Pikaid::fromBinary($binary); }, $case['name'] . '/invalid binary');
 }
+
+// Public error-code contract (1-6 are reachable; 7 remains reserved for backward compatibility).
+$verify(
+    [
+        PikaidException::CODE_INVALID_LENGTH,
+        PikaidException::CODE_INVALID_CHARACTER,
+        PikaidException::CODE_TIMESTAMP_OVERFLOW,
+        PikaidException::CODE_TIMESTAMP_NEGATIVE,
+        PikaidException::CODE_ENTROPY_OVERFLOW,
+        PikaidException::CODE_INVALID_BINARY_LENGTH,
+        PikaidException::CODE_INVALID_BINARY_TYPE,
+    ] === [1, 2, 3, 4, 5, 6, 7],
+    'public error code constants'
+);
+$verify((new PikaidException('test', 7)) instanceof InvalidArgumentException, 'exception type');
+$rejectsWithCode(static function (): void { Pikaid::validateOrThrow('short'); }, 1, 'code 1 invalid length');
+$rejectsWithCode(
+    static function (): void { Pikaid::validateOrThrow(str_repeat('0', 25) . 'A'); },
+    2,
+    'code 2 invalid character'
+);
+$rejectsWithCode(
+    static function (): void { Pikaid::fromBinary(hex2bin('123ede4000' . str_repeat('00', 12))); },
+    3,
+    'code 3 binary timestamp overflow'
+);
+$rejectsWithCode(
+    static function (): void { Pikaid::generateWithTimestamp(Pikaid::MAX_TIMESTAMP + 1); },
+    3,
+    'code 3 generation timestamp overflow'
+);
+$rejectsWithCode(
+    static function (): void { Pikaid::generateWithTimestamp(-1); },
+    4,
+    'code 4 negative timestamp'
+);
 $overflow = '0000000' . str_repeat('z', 19);
+$rejectsWithCode(
+    static function () use ($overflow): void { Pikaid::validateOrThrow($overflow); },
+    5,
+    'code 5 entropy overflow'
+);
+$rejectsWithCode(
+    static function (): void { Pikaid::fromBinary(str_repeat("\0", 16)); },
+    6,
+    'code 6 binary length 16'
+);
+$rejectsWithCode(
+    static function (): void { Pikaid::fromBinary(str_repeat("\0", 18)); },
+    6,
+    'code 6 binary length 18'
+);
+$verify(PikaidException::CODE_INVALID_BINARY_TYPE === 7, 'code 7 reserved constant');
+
 $verify(Pikaid::isWellFormed($overflow), 'overflow is well-formed');
 $verify(!Pikaid::isValid($overflow), 'overflow is not valid');
+$verify(!Pikaid::isWellFormed(strtoupper($overflow)), 'uppercase is not well-formed');
+$verify(!Pikaid::isWellFormed('é' . str_repeat('0', 24)), 'non-ASCII is not well-formed');
+$verify(!Pikaid::isWellFormed(substr($overflow, 0, 25)), 'short input is not well-formed');
+$verify(!Pikaid::isWellFormed(''), 'empty input is not well-formed');
+
+// Exact binary boundaries and leading-zero preservation.
+$zeroBinary = str_repeat("\0", 17);
+$verify(Pikaid::fromBinary($zeroBinary) === '00000000000000000000000000', 'zero binary');
+$verify(Pikaid::toBinary('00000000000000000000000000') === $zeroBinary, 'zero binary round-trip');
+$oneBinary = hex2bin('0000000001' . str_repeat('00', 12));
+$verify(is_string($oneBinary), 'one binary hex');
+$verify(Pikaid::fromBinary($oneBinary) === '0000001' . str_repeat('0', 19), 'leading zero preservation');
+$maxBinary = hex2bin('123ede3fffffffffffffffffffffffffff');
+$verify(is_string($maxBinary), 'max binary hex');
+$verify(Pikaid::fromBinary($maxBinary) === 'zzzzzzz7oiylpimjg5u2ca1ypr', 'max binary');
+$verify(Pikaid::toBinary('zzzzzzz7oiylpimjg5u2ca1ypr') === $maxBinary, 'max binary round-trip');
+$rejectsWithCode(
+    static function (): void { Pikaid::fromBinary(hex2bin('123ede4000' . str_repeat('00', 12))); },
+    3,
+    'first binary timestamp above maximum'
+);
+
 foreach ([0, 1, 1700000000, Pikaid::MAX_TIMESTAMP] as $timestamp) {
     $id = Pikaid::generateWithTimestamp($timestamp);
     $verify(Pikaid::getTimestamp($id) === $timestamp, 'timestamp bounds');
@@ -61,9 +174,43 @@ foreach ([0, 1, 1700000000, Pikaid::MAX_TIMESTAMP] as $timestamp) {
     $verify(strlen($binary) === 17, 'binary length');
     $verify(Pikaid::getTimestamp(Pikaid::fromBinary($binary)) === $timestamp, 'binary generation timestamp');
 }
-foreach ([-1, Pikaid::MAX_TIMESTAMP + 1] as $timestamp) {
-    $rejects(static function () use ($timestamp): void { Pikaid::generateWithTimestamp($timestamp); }, 'out-of-range generation');
+$rejectsWithCode(
+    static function (): void { Pikaid::generateWithTimestamp(-1); },
+    4,
+    'negative generation timestamp'
+);
+$rejectsWithCode(
+    static function (): void { Pikaid::generateWithTimestamp(Pikaid::MAX_TIMESTAMP + 1); },
+    3,
+    'overflow generation timestamp'
+);
+
+// Independent oracle checks over deterministic and random inputs.
+$oracleCases = [
+    [0, str_repeat("\0", 12)],
+    [1, str_repeat("\0", 12)],
+    [1700000000, hex2bin('00112233445566778899aabb')],
+    [Pikaid::MAX_TIMESTAMP - 1, str_repeat("\xff", 12)],
+    [Pikaid::MAX_TIMESTAMP, str_repeat("\xff", 12)],
+    [Pikaid::MAX_TIMESTAMP, hex2bin('800000000000000000000001')],
+];
+foreach ($oracleCases as [$timestamp, $entropy]) {
+    $binary = IndependentOracle::binary($timestamp, $entropy);
+    $expected = IndependentOracle::encode($timestamp, $entropy);
+    $verify(Pikaid::fromBinary($binary) === $expected, 'oracle deterministic string');
+    $verify(Pikaid::toBinary($expected) === $binary, 'oracle deterministic binary');
+    $verify(Pikaid::getTimestamp($expected) === $timestamp, 'oracle deterministic timestamp');
 }
+for ($i = 0; $i < 64; ++$i) {
+    $timestamp = random_int(0, Pikaid::MAX_TIMESTAMP);
+    $entropy = random_bytes(12);
+    $binary = IndependentOracle::binary($timestamp, $entropy);
+    $expected = IndependentOracle::encode($timestamp, $entropy);
+    $verify(Pikaid::fromBinary($binary) === $expected, 'oracle random string');
+    $verify(Pikaid::toBinary($expected) === $binary, 'oracle random binary');
+    $verify(Pikaid::getTimestamp($expected) === $timestamp, 'oracle random timestamp');
+}
+
 $prior = null;
 $seen = [];
 for ($i = 0; $i < 1800; ++$i) {
@@ -87,13 +234,62 @@ for ($i = 0; $i < 1800; ++$i) {
 $verify(count($seen) === 250, 'generation uniqueness sample');
 $verify(Pikaid::isValid(Pikaid::fromDateTime(new DateTimeImmutable('@1700000000'))), 'DateTime generation');
 
-if (function_exists('bcscale') && !function_exists('gmp_import')) {
-    $originalScale = bcscale();
-    bcscale(4);
-    try {
-        $binary = hex2bin('006553f10000112233445566778899aabb');
-        $verify(Pikaid::toBinary(Pikaid::fromBinary($binary)) === $binary, 'BCMath explicit scale');
-    } finally {
+// Force each available backend, including BCMath, and vary its ambient scale.
+$gmpProperty = new ReflectionProperty(Pikaid::class, 'hasGmp');
+$bcmathProperty = new ReflectionProperty(Pikaid::class, 'hasBcmath');
+if (PHP_VERSION_ID < 80100) {
+    $gmpProperty->setAccessible(true);
+    $bcmathProperty->setAccessible(true);
+}
+$originalGmp = $gmpProperty->getValue();
+$originalBcmath = $bcmathProperty->getValue();
+$originalScale = function_exists('bcscale') ? bcscale() : null;
+$backends = [[false, false]];
+if (function_exists('bcscale')) {
+    $backends[] = [false, true];
+}
+if (function_exists('gmp_import')) {
+    $backends[] = [true, false];
+    $backends[] = [true, true];
+}
+$scales = $originalScale === null ? [null] : [0, 4, 20];
+
+try {
+    foreach ($scales as $scale) {
+        if ($scale !== null) {
+            bcscale($scale);
+        }
+        foreach ($backends as $backend) {
+            $gmpProperty->setValue(null, $backend[0]);
+            $bcmathProperty->setValue(null, $backend[1]);
+            $label = 'backend gmp=' . ($backend[0] ? '1' : '0')
+                . ' bcmath=' . ($backend[1] ? '1' : '0')
+                . ' scale=' . (string) $scale;
+
+            foreach ($oracleCases as [$timestamp, $entropy]) {
+                $binary = IndependentOracle::binary($timestamp, $entropy);
+                $expected = IndependentOracle::encode($timestamp, $entropy);
+                $verify(Pikaid::fromBinary($binary) === $expected, $label . '/string');
+                $verify(Pikaid::toBinary($expected) === $binary, $label . '/binary');
+            }
+
+            $verify(!Pikaid::isValid($overflow), $label . '/overflow invalid');
+            $rejectsWithCode(
+                static function () use ($overflow): void { Pikaid::validateOrThrow($overflow); },
+                5,
+                $label . '/overflow code'
+            );
+
+            $generated = Pikaid::generateWithTimestamp(1700000000);
+            $verify(Pikaid::isValid($generated), $label . '/generated valid');
+            $verify(Pikaid::getTimestamp($generated) === 1700000000, $label . '/generated timestamp');
+            $verify(Pikaid::fromBinary(Pikaid::toBinary($generated)) === $generated, $label . '/generated round-trip');
+        }
+    }
+} finally {
+    $gmpProperty->setValue(null, $originalGmp);
+    $bcmathProperty->setValue(null, $originalBcmath);
+    if ($originalScale !== null) {
         bcscale($originalScale);
     }
 }
