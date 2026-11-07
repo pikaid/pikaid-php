@@ -2,6 +2,12 @@
 
 Changes to the **PHP implementation** are recorded here. The pikaid identifier format remains immutable and unversioned; specification revisions are separate from PHP package releases.
 
+## Unreleased
+
+### Fixed
+
+- Keep local `/.ai/` working files and other development artifacts out of `composer archive` output. The overbroad `/.??` ignore rule is replaced by an explicit `/.ai/` rule, and `archive.exclude` now covers local tooling, caches, and `vendor/`. Published Git/Packagist archives were already unaffected because `.ai/` is untracked.
+
 ## 1.2.0 - 2026-11-06
 
 ### Changed

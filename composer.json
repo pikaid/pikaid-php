@@ -36,6 +36,24 @@
     "ext-gmp": "Fastest Base36 conversions (recommended for best performance)",
     "ext-bcmath": "Faster than pure-PHP fallback if GMP is unavailable"
   },
+  "archive": {
+    "exclude": [
+      "/.ai/",
+      "/.github/",
+      "/.gitignore",
+      "/.phpunit.cache/",
+      "/.phpunit.result.cache",
+      "/.DS_Store",
+      "/dev/",
+      "/vendor/",
+      "/coverage/",
+      "/build/",
+      "/logs/",
+      "/*.log",
+      "/composer.lock",
+      "/opencode.jsonc"
+    ]
+  },
   "scripts": {
     "test": "phpunit --configuration phpunit.xml.dist",
     "bench": "php benchmarks/PerformanceTest.php"
