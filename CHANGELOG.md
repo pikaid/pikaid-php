@@ -13,6 +13,7 @@ Changes to the **PHP implementation** are recorded here. The pikaid identifier f
 - Packaging hygiene check for `composer archive` output and an external consumer smoke test that installs the archive into an isolated project.
 - README example extraction and execution, and a repository-wide PHP lint step in CI.
 - CI jobs now cover PHP 8.3/8.4/8.5, Xdebug path coverage, legacy PHP 7.3/7.4, and the packaging/consumer checks.
+- The official shared conformance suite from `pikaid-specs` commit `059780cc0e5b113443812720d95c630649bf3aa3` runs through a test-only JSON-Lines adapter on the GMP, BCMath and pure-PHP paths. `--automated-only` exit `0` is documented as *not* a certification; the default audit mode exits `3` until the two manual CSPRNG reviews are signed off.
 
 ### Changed
 

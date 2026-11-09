@@ -391,6 +391,12 @@ assert(strcmp(Pikaid::toBinary($id1), Pikaid::toBinary($id2)) < 0); // Binary or
 - Measured statement, method and branch coverage with a regression gate (Xdebug path coverage, `src/` only).
 - `composer archive` hygiene and installation of the archive into an isolated external consumer project.
 
+### Official shared conformance suite
+
+CI also runs the language-neutral suite from [pikaid-specs](https://github.com/pikaid/pikaid-specs), pinned to the immutable commit `059780cc0e5b113443812720d95c630649bf3aa3` (package `1.0.0`, specification `1.0.4`, 1,100 cases: 596 valid, 258 invalid-string, 33 invalid-binary, 186 ordering, 12 generation, 15 property). `tests/official/adapter.php` is a test-only JSON-Lines bridge that delegates every operation to this library; it is excluded from the distributable archive.
+
+The suite runs with `--automated-only` against the GMP, BCMath and genuine pure-PHP paths. That flag deliberately skips the two manual CSPRNG review obligations, so an `--automated-only` exit code of `0` is **not** a conformance certification. Running the same suite without the flag exits `3` with `AUTOMATED_PASS_AUDIT_REQUIRED` while `P-GENERATE-RNG-SOURCE` and `P-GENERATE-RNG-FAILURE` remain `MANUAL_EVIDENCE_REQUIRED`; independent human review of those two points is still outstanding.
+
 The latest published tag is **`v1.2.0`**. Hardening committed to `main` after that tag is unreleased: no version bump, tag, or registry publication has been made. Install from a Git tag or a VCS repository until a new release is published.
 
 ---
