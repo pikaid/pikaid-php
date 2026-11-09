@@ -45,9 +45,11 @@ The binary representation uses **5 bytes for the timestamp** (unsigned 40-bit, b
 
 ## ⚙️ Requirements
 
-- PHP **7.3+ on 64-bit platforms** (PHP 8 recommended)
+- PHP **7.3+ on 64-bit platforms**
 - `ext-gmp` *(recommended for best performance)* or `ext-bcmath` *(optional)*
 - If neither extension is installed, a pure-PHP fallback is used.
+
+**Support status:** PHP **8.3, 8.4 and 8.5** are the actively tested, security-supported targets. PHP **7.3 and 7.4** are legacy, end-of-life runtimes: CI still runs the standalone conformance harness there, but those versions do not receive security maintenance and should not be used for new deployments.
 
 ## 📦 Installation
 
@@ -222,6 +224,22 @@ All methods accepting a pikaid string perform strict validation. Invalid input r
 
 `compare()` sorts by timestamp across different seconds. Within the same second, comparison follows the random suffix, **not generation order**.
 
+### Cross-SDK capability parity
+
+Every official pikaid SDK exposes the same capabilities; only the naming convention differs by language. Conformance is defined by the shared, immutable fixture and specification — not by identical method spellings.
+
+| Capability                        | PHP entrypoints                                                        |
+| --------------------------------- | ---------------------------------------------------------------------- |
+| Generate a string ID              | `generate()`, `generateWithTimestamp()`                                |
+| Generate a binary ID              | `generateBinary()`, `generateBinaryWithTimestamp()`                    |
+| Generate from a date/time         | `fromDateTime()`                                                       |
+| Validate                          | `isValid()`, `isWellFormed()`, `validateOrThrow()`                     |
+| Convert string ↔ binary           | `toBinary()`, `fromBinary()`                                           |
+| Extract timestamp and randomness  | `decode()`, `getTimestamp()`, `getEntropyBytes()`, `getEntropyHex()`, `parse()` |
+| Compare canonically               | `compare()`                                                            |
+
+The public method surface and exception codes are locked by a parity test, so an accidental removal or signature change fails CI.
+
 ---
 
 ## 🔄 Order Guarantee
@@ -363,9 +381,25 @@ assert(strcmp(Pikaid::toBinary($id1), Pikaid::toBinary($id2)) < 0); // Binary or
 
 ---
 
+## ✅ Verification and release status
+
+`main` is verified against the immutable specification revision **1.0.4** (tag `v1.0.4`, commit `17014d76f568c3ac9f9ce2927c1a018fdbc36d1d`). CI enforces:
+
+- The pinned official fixture `tests/vectors/pikaid-v1.json` (SHA-256 `b0c9dfdd…613500`), an independent decimal-string oracle, and a separately derived conformance matrix whose expected values come from Python big integers — never from the production encoder under test.
+- Positive, negative, overflow, Unicode, invalid-type and ordering cases across all three arithmetic paths: GMP, BCMath, and a genuine no-extension pure-PHP fallback.
+- A frozen public API surface, exception codes, runnable README examples, and PHP lint on every file.
+- Measured statement, method and branch coverage with a regression gate (Xdebug path coverage, `src/` only).
+- `composer archive` hygiene and installation of the archive into an isolated external consumer project.
+
+The latest published tag is **`v1.2.0`**. Hardening committed to `main` after that tag is unreleased: no version bump, tag, or registry publication has been made. Install from a Git tag or a VCS repository until a new release is published.
+
+---
+
 ## 📄 License
 
-pikaid-php is open-source software licensed under the **MIT License**.
+pikaid-php is open-source software licensed under the **MIT License** from **v1.2.0 onward**, including current `main`.
+
+Releases up to and including **v1.1.1** were published under **LGPL-3.0-or-later**. That historical licensing still applies to those versions; the change to MIT did not and does not retroactively relicense them.
 
 You may use, copy, modify, distribute, and sublicense this library, including in commercial and proprietary applications, subject to the license terms.
 

@@ -1,4 +1,6 @@
 /vendor/
+/dev/
+.vs
 .phpunit.result.cache
 .phpunit.cache
 /coverage/
@@ -8,4 +10,5 @@
 .DS_Store
 Thumbs.db
 
-/.??/
+/.ai/
+/.vscode

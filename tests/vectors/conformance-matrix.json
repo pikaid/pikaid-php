@@ -1,0 +1,417 @@
+{
+  "meta": {
+    "project": "pikaid",
+    "purpose": "Pinned same-value conformance matrix; expected values derived independently with Python big integers, not by the PHP production encoder.",
+    "spec_revision": "1.0.4",
+    "spec_tag": "v1.0.4",
+    "spec_commit": "17014d76f568c3ac9f9ce2927c1a018fdbc36d1d",
+    "official_fixture_sha256": "b0c9dfdd063613424414fef5c9065fbd2f81d645d0ab42b34e27cde715613500",
+    "string_length": 26,
+    "binary_length": 17,
+    "timestamp_max": 78364164095,
+    "entropy_bits": 96
+  },
+  "valid": [
+    {
+      "name": "all-zero",
+      "timestamp": 0,
+      "entropy_hex": "000000000000000000000000",
+      "id": "00000000000000000000000000",
+      "bin_hex": "0000000000000000000000000000000000"
+    },
+    {
+      "name": "ts-1-entropy-1",
+      "timestamp": 1,
+      "entropy_hex": "000000000000000000000001",
+      "id": "00000010000000000000000001",
+      "bin_hex": "0000000001000000000000000000000001"
+    },
+    {
+      "name": "max-values",
+      "timestamp": 78364164095,
+      "entropy_hex": "ffffffffffffffffffffffff",
+      "id": "zzzzzzz7oiylpimjg5u2ca1ypr",
+      "bin_hex": "123ede3fffffffffffffffffffffffffff"
+    },
+    {
+      "name": "sample-1700000000",
+      "timestamp": 1700000000,
+      "entropy_hex": "00112233445566778899aabb",
+      "id": "0s44we8002loz3po6mcf6vsn23",
+      "bin_hex": "006553f10000112233445566778899aabb"
+    },
+    {
+      "name": "leading-zero-entropy",
+      "timestamp": 1700000000,
+      "entropy_hex": "000000000000000000000001",
+      "id": "0s44we80000000000000000001",
+      "bin_hex": "006553f100000000000000000000000001"
+    },
+    {
+      "name": "all-ff-entropy-at-sample",
+      "timestamp": 1700000000,
+      "entropy_hex": "ffffffffffffffffffffffff",
+      "id": "0s44we87oiylpimjg5u2ca1ypr",
+      "bin_hex": "006553f100ffffffffffffffffffffffff"
+    },
+    {
+      "name": "zero-ts-all-ff",
+      "timestamp": 0,
+      "entropy_hex": "ffffffffffffffffffffffff",
+      "id": "00000007oiylpimjg5u2ca1ypr",
+      "bin_hex": "0000000000ffffffffffffffffffffffff"
+    },
+    {
+      "name": "max-ts-zero-entropy",
+      "timestamp": 78364164095,
+      "entropy_hex": "000000000000000000000000",
+      "id": "zzzzzzz0000000000000000000",
+      "bin_hex": "123ede3fff000000000000000000000000"
+    },
+    {
+      "name": "max-minus-one-all-ff",
+      "timestamp": 78364164094,
+      "entropy_hex": "ffffffffffffffffffffffff",
+      "id": "zzzzzzy7oiylpimjg5u2ca1ypr",
+      "bin_hex": "123ede3ffeffffffffffffffffffffffff"
+    },
+    {
+      "name": "ts-1-zero-entropy",
+      "timestamp": 1,
+      "entropy_hex": "000000000000000000000000",
+      "id": "00000010000000000000000000",
+      "bin_hex": "0000000001000000000000000000000000"
+    },
+    {
+      "name": "ts-1699999999",
+      "timestamp": 1699999999,
+      "entropy_hex": "00112233445566778899aabb",
+      "id": "0s44we7002loz3po6mcf6vsn23",
+      "bin_hex": "006553f0ff00112233445566778899aabb"
+    },
+    {
+      "name": "ts-1700000001",
+      "timestamp": 1700000001,
+      "entropy_hex": "00112233445566778899aabb",
+      "id": "0s44we9002loz3po6mcf6vsn23",
+      "bin_hex": "006553f10100112233445566778899aabb"
+    },
+    {
+      "name": "ts-1700000002",
+      "timestamp": 1700000002,
+      "entropy_hex": "00112233445566778899aabb",
+      "id": "0s44wea002loz3po6mcf6vsn23",
+      "bin_hex": "006553f10200112233445566778899aabb"
+    },
+    {
+      "name": "entropy-2pow95",
+      "timestamp": 1700000000,
+      "entropy_hex": "800000000000000000000000",
+      "id": "0s44we83u9haurb9q2x1650zcw",
+      "bin_hex": "006553f100800000000000000000000000"
+    },
+    {
+      "name": "entropy-low-byte",
+      "timestamp": 1700000000,
+      "entropy_hex": "0000000000000000000000ff",
+      "id": "0s44we80000000000000000073",
+      "bin_hex": "006553f1000000000000000000000000ff"
+    },
+    {
+      "name": "entropy-high-byte",
+      "timestamp": 1700000000,
+      "entropy_hex": "ff0000000000000000000000",
+      "id": "0s44we87ng2opu83wjvhstpatc",
+      "bin_hex": "006553f100ff0000000000000000000000"
+    },
+    {
+      "name": "entropy-pattern",
+      "timestamp": 1700000000,
+      "entropy_hex": "0123456789abcdef01234567",
+      "id": "0s44we80188skr4f4jv458xrhj",
+      "bin_hex": "006553f1000123456789abcdef01234567"
+    },
+    {
+      "name": "ts-1234567890",
+      "timestamp": 1234567890,
+      "entropy_hex": "deadbeef00ff00ff00ff00ff",
+      "id": "0kf12oi6oj7k6k0b8gga1bm7zz",
+      "bin_hex": "00499602d2deadbeef00ff00ff00ff00ff"
+    },
+    {
+      "name": "ts-2147483647",
+      "timestamp": 2147483647,
+      "entropy_hex": "7fffffffffffffffffffffff",
+      "id": "0zik0zj3u9haurb9q2x1650zcv",
+      "bin_hex": "007fffffff7fffffffffffffffffffffff"
+    },
+    {
+      "name": "ts-4294967295",
+      "timestamp": 4294967295,
+      "entropy_hex": "00000000000000000000ffff",
+      "id": "1z141z30000000000000001ekf",
+      "bin_hex": "00ffffffff00000000000000000000ffff"
+    },
+    {
+      "name": "ts-4294967296",
+      "timestamp": 4294967296,
+      "entropy_hex": "000000000000000000000001",
+      "id": "1z141z40000000000000000001",
+      "bin_hex": "0100000000000000000000000000000001"
+    },
+    {
+      "name": "seeded-random-1",
+      "timestamp": 24132676856,
+      "entropy_hex": "083edb6198f0d0d9a852d8de",
+      "id": "b33z0mw08wn25ijlx9ig7fd8ta",
+      "bin_hex": "059e6b6cf8083edb6198f0d0d9a852d8de"
+    },
+    {
+      "name": "seeded-random-2",
+      "timestamp": 42608661679,
+      "entropy_hex": "32b13aaf4e7fdb234466c0f4",
+      "id": "jko3hrj1ir8zh4a90v1quuozqs",
+      "bin_hex": "09ebac94af32b13aaf4e7fdb234466c0f4"
+    },
+    {
+      "name": "seeded-random-3",
+      "timestamp": 22276708672,
+      "entropy_hex": "940f238474cd66358eac0216",
+      "id": "a8ez6f44fxiexq7btdjj0lrwgm",
+      "bin_hex": "052fcb9940940f238474cd66358eac0216"
+    },
+    {
+      "name": "seeded-random-4",
+      "timestamp": 11317442937,
+      "entropy_hex": "367aaa6b3443a73d863a876a",
+      "id": "57642ux1mui9vu0z9uhvrthzl6",
+      "bin_hex": "02a2927979367aaa6b3443a73d863a876a"
+    },
+    {
+      "name": "seeded-random-5",
+      "timestamp": 16432003243,
+      "entropy_hex": "c9ec07a5e0c6ec9c5288a4f2",
+      "id": "7jr6uuj6241wt3qw326zrem9rm",
+      "bin_hex": "03d36c78abc9ec07a5e0c6ec9c5288a4f2"
+    },
+    {
+      "name": "seeded-random-6",
+      "timestamp": 66832474730,
+      "entropy_hex": "381662dbd8eb3caa7f1b44d3",
+      "id": "upabvje1ol1qifzciupe3yw2xf",
+      "bin_hex": "0f8f86a26a381662dbd8eb3caa7f1b44d3"
+    },
+    {
+      "name": "seeded-random-7",
+      "timestamp": 56551473545,
+      "entropy_hex": "137fc0c3e9927a113a7b24b5",
+      "id": "pz9ac950l290p4tkwrjq6kzlpx",
+      "bin_hex": "0d2abb0189137fc0c3e9927a113a7b24b5"
+    },
+    {
+      "name": "seeded-random-8",
+      "timestamp": 52594372370,
+      "entropy_hex": "4ec0c2f13869b4d60fdca974",
+      "id": "o5tbxg22d2fkydyu3rzabh4zg4",
+      "bin_hex": "0c3ede6f124ec0c2f13869b4d60fdca974"
+    }
+  ],
+  "invalid": {
+    "string": [
+      {
+        "name": "empty",
+        "id": "",
+        "shape_valid": false,
+        "code": 1
+      },
+      {
+        "name": "length-25",
+        "id": "0000000000000000000000000",
+        "shape_valid": false,
+        "code": 1
+      },
+      {
+        "name": "length-27",
+        "id": "000000000000000000000000000",
+        "shape_valid": false,
+        "code": 1
+      },
+      {
+        "name": "length-1000",
+        "id": "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "shape_valid": false,
+        "code": 1
+      },
+      {
+        "name": "uppercase-all",
+        "id": "000000A0000000000000000000",
+        "shape_valid": false,
+        "code": 2
+      },
+      {
+        "name": "uppercase-timestamp",
+        "id": "A0000000000000000000000000",
+        "shape_valid": false,
+        "code": 2
+      },
+      {
+        "name": "non-ascii-e-acute",
+        "id": "000000000000000000000000é",
+        "shape_valid": false,
+        "code": 2
+      },
+      {
+        "name": "zero-width-space",
+        "id": "00000000000000000000000​",
+        "shape_valid": false,
+        "code": 2
+      },
+      {
+        "name": "nul",
+        "id": "0000000000000000000000000\u0000",
+        "shape_valid": false,
+        "code": 2
+      },
+      {
+        "name": "space",
+        "id": "0000000000000000000000000 ",
+        "shape_valid": false,
+        "code": 2
+      },
+      {
+        "name": "crlf",
+        "id": "000000000000000000000000\r\n",
+        "shape_valid": false,
+        "code": 2
+      },
+      {
+        "name": "tab",
+        "id": "0000000000000000000000000\t",
+        "shape_valid": false,
+        "code": 2
+      },
+      {
+        "name": "punctuation-dash",
+        "id": "000000-0000000000000000000",
+        "shape_valid": false,
+        "code": 2
+      },
+      {
+        "name": "punctuation-underscore",
+        "id": "000000_0000000000000000000",
+        "shape_valid": false,
+        "code": 2
+      },
+      {
+        "name": "punctuation-plus",
+        "id": "000000+0000000000000000000",
+        "shape_valid": false,
+        "code": 2
+      },
+      {
+        "name": "entropy-overflow-36pow19-minus-1",
+        "id": "0000000zzzzzzzzzzzzzzzzzzz",
+        "shape_valid": true,
+        "code": 5
+      },
+      {
+        "name": "entropy-overflow-2pow96",
+        "id": "00000007oiylpimjg5u2ca1yps",
+        "shape_valid": true,
+        "code": 5
+      },
+      {
+        "name": "entropy-overflow-2pow96-plus-1",
+        "id": "00000007oiylpimjg5u2ca1ypt",
+        "shape_valid": true,
+        "code": 5
+      },
+      {
+        "name": "leading-space",
+        "id": " 0000000000000000000000000",
+        "shape_valid": false,
+        "code": 2
+      },
+      {
+        "name": "trailing-space",
+        "id": "0000000000000000000000000 ",
+        "shape_valid": false,
+        "code": 2
+      }
+    ],
+    "binary": [
+      {
+        "name": "empty",
+        "bin_hex": "",
+        "code": 6
+      },
+      {
+        "name": "one-byte",
+        "bin_hex": "00",
+        "code": 6
+      },
+      {
+        "name": "too-short-16",
+        "bin_hex": "00000000000000000000000000000000",
+        "code": 6
+      },
+      {
+        "name": "too-long-18",
+        "bin_hex": "000000000000000000000000000000000000",
+        "code": 6
+      },
+      {
+        "name": "too-long-100",
+        "bin_hex": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "code": 6
+      },
+      {
+        "name": "timestamp-overflow-max-plus-one",
+        "bin_hex": "123ede4000000000000000000000000000",
+        "code": 3
+      },
+      {
+        "name": "timestamp-overflow-2pow40-minus-1",
+        "bin_hex": "ffffffffff000000000000000000000000",
+        "code": 3
+      },
+      {
+        "name": "timestamp-overflow-2pow40-minus-1-all-ff",
+        "bin_hex": "ffffffffffffffffffffffffffffffffff",
+        "code": 3
+      }
+    ]
+  },
+  "type_errors": [
+    {
+      "name": "null",
+      "value": "null"
+    },
+    {
+      "name": "int",
+      "value": "123"
+    },
+    {
+      "name": "float",
+      "value": "1.5"
+    },
+    {
+      "name": "bool",
+      "value": "true"
+    },
+    {
+      "name": "array",
+      "value": "[]"
+    },
+    {
+      "name": "object",
+      "value": "object"
+    }
+  ],
+  "ordering": [
+    "ts-1699999999",
+    "sample-1700000000",
+    "ts-1700000001",
+    "ts-1700000002"
+  ]
+}

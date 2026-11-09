@@ -4,9 +4,25 @@ Changes to the **PHP implementation** are recorded here. The pikaid identifier f
 
 ## Unreleased
 
+### Added
+
+- Independently derived conformance matrix (`tests/vectors/conformance-matrix.json`) covering valid boundaries, overflow, invalid characters, Unicode/zero-width input, wrong types and ordering, pinned by SHA-256 and cross-checked against a decimal-string oracle rather than the production encoder.
+- Backend parity tests that run the identical matrix through the GMP, BCMath and genuine no-extension pure-PHP arithmetic paths in separate processes and assert the reported backend selection and identical results.
+- Public API lock test freezing all public method signatures, constants, exception codes and exception factories, plus the cross-SDK capability table in the README.
+- Coverage measurement restricted to `src/` with an enforceable regression gate (statements, methods, and branches when the driver reports them).
+- Packaging hygiene check for `composer archive` output and an external consumer smoke test that installs the archive into an isolated project.
+- README example extraction and execution, and a repository-wide PHP lint step in CI.
+- CI jobs now cover PHP 8.3/8.4/8.5, Xdebug path coverage, legacy PHP 7.3/7.4, and the packaging/consumer checks.
+
+### Changed
+
+- README documents specification revision 1.0.4 pinning, the verification performed in CI, current support status (8.3/8.4/8.5 supported; 7.3/7.4 legacy and end-of-life), and the historical license change.
+- `archive.exclude` now keeps tests, benchmarks, CI configuration and development artifacts out of distributable archives.
+
 ### Fixed
 
-- Keep local `/.ai/` working files and other development artifacts out of `composer archive` output. The overbroad `/.??` ignore rule is replaced by an explicit `/.ai/` rule, and `archive.exclude` now covers local tooling, caches, and `vendor/`. Published Git/Packagist archives were already unaffected because `.ai/` is untracked.
+- Keep local `/.ai/` working files and other development artifacts out of `composer archive` output. The overbroad `/.??` ignore rule is replaced by an explicit `/.ai/` rule, and `archive.exclude` now covers local tooling, caches, `tests/`, `benchmarks/` and `vendor/`. Published Git/Packagist archives were already unaffected because `.ai/` is untracked.
+- Add behavioral coverage for `generateBinary()` and the reserved invalid-binary-type exception factory so previously unexecuted paths are exercised.
 
 ## 1.2.0 - 2026-11-06
 

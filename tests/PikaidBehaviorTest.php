@@ -33,6 +33,28 @@ final class PikaidBehaviorTest extends TestCase
         }
     }
 
+    public function testBinaryGenerationUsesCurrentTime(): void
+    {
+        $before = time();
+        $binary = Pikaid::generateBinary();
+        $after = time();
+
+        self::assertSame(17, strlen($binary));
+        $timestamp = Pikaid::getTimestamp(Pikaid::fromBinary($binary));
+        self::assertGreaterThanOrEqual($before, $timestamp);
+        self::assertLessThanOrEqual($after, $timestamp);
+    }
+
+    public function testInvalidBinaryTypeFactoryReportsReservedCode(): void
+    {
+        $exception = PikaidException::invalidBinaryType('int');
+
+        self::assertInstanceOf(PikaidException::class, $exception);
+        self::assertInstanceOf(InvalidArgumentException::class, $exception);
+        self::assertSame(PikaidException::CODE_INVALID_BINARY_TYPE, $exception->getCode());
+        self::assertSame('Binary pikaid must be a string, got int.', $exception->getMessage());
+    }
+
     public function testTimestampBoundsRejectOutOfRange(): void
     {
         self::assertPikaidError(4, static function (): void {
