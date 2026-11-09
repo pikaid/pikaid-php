@@ -22,6 +22,7 @@ Changes to the **PHP implementation** are recorded here. The pikaid identifier f
 
 ### Fixed
 
+- The standalone harness now selects the GMP and BCMath paths from the exact functions each conversion path calls instead of using `bcscale()` as a BCMath presence check. A runtime with selectively disabled BCMath functions (for example `disable_functions=bcadd`) exercises the pure-PHP fallback instead of aborting, and the final line reports the usable arithmetic backends rather than only the loaded extensions.
 - Keep local `/.ai/` working files and other development artifacts out of `composer archive` output. The overbroad `/.??` ignore rule is replaced by an explicit `/.ai/` rule, and `archive.exclude` now covers local tooling, caches, `tests/`, `benchmarks/` and `vendor/`. Published Git/Packagist archives were already unaffected because `.ai/` is untracked.
 - Add behavioral coverage for `generateBinary()` and the reserved invalid-binary-type exception factory so previously unexecuted paths are exercised.
 

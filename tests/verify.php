@@ -235,6 +235,29 @@ $verify(count($seen) === 250, 'generation uniqueness sample');
 $verify(Pikaid::isValid(Pikaid::fromDateTime(new DateTimeImmutable('@1700000000'))), 'DateTime generation');
 
 // Force each available backend, including BCMath, and vary its ambient scale.
+//
+// A backend may only be forced when every function that backend calls exists.
+// Enumerating from a single sentinel (historically bcscale()) could select
+// BCMath while bcadd()/bcmul()/... were unavailable, so a restricted runtime
+// with selectively disabled functions aborted instead of falling back. These
+// sets mirror tests/BackendParityTest.php and the calls made in src/Pikaid.php.
+$gmpFunctions = ['gmp_import', 'gmp_export', 'gmp_init', 'gmp_strval'];
+$bcmathFunctions = ['bcadd', 'bcmul', 'bccomp', 'bcmod', 'bcdiv'];
+$hasGmpFunctions = true;
+foreach ($gmpFunctions as $function) {
+    if (!function_exists($function)) {
+        $hasGmpFunctions = false;
+        break;
+    }
+}
+$hasBcmathFunctions = true;
+foreach ($bcmathFunctions as $function) {
+    if (!function_exists($function)) {
+        $hasBcmathFunctions = false;
+        break;
+    }
+}
+
 $gmpProperty = new ReflectionProperty(Pikaid::class, 'hasGmp');
 $bcmathProperty = new ReflectionProperty(Pikaid::class, 'hasBcmath');
 if (PHP_VERSION_ID < 80100) {
@@ -243,12 +266,14 @@ if (PHP_VERSION_ID < 80100) {
 }
 $originalGmp = $gmpProperty->getValue();
 $originalBcmath = $bcmathProperty->getValue();
-$originalScale = function_exists('bcscale') ? bcscale() : null;
+// Varying the ambient scale is only meaningful when BCMath is usable and the
+// setter itself is available; otherwise the scale block is skipped entirely.
+$originalScale = $hasBcmathFunctions && function_exists('bcscale') ? bcscale() : null;
 $backends = [[false, false]];
-if (function_exists('bcscale')) {
+if ($hasBcmathFunctions) {
     $backends[] = [false, true];
 }
-if (function_exists('gmp_import')) {
+if ($hasGmpFunctions) {
     $backends[] = [true, false];
     $backends[] = [true, true];
 }
@@ -294,4 +319,13 @@ try {
     }
 }
 
-echo sprintf("PASS: %d checks (PHP %s; GMP %s; BCMath %s)\n", $checks, PHP_VERSION, extension_loaded('gmp') ? 'yes' : 'no', extension_loaded('bcmath') ? 'yes' : 'no');
+// Report the arithmetic backends that are usable in this runtime, not merely
+// whether the extensions are loaded: disable_functions can remove individual
+// functions while extension_loaded() still reports yes.
+echo sprintf(
+    "PASS: %d checks (PHP %s; GMP %s; BCMath %s)\n",
+    $checks,
+    PHP_VERSION,
+    $hasGmpFunctions ? 'yes' : 'no',
+    $hasBcmathFunctions ? 'yes' : 'no'
+);

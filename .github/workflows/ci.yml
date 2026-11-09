@@ -158,6 +158,10 @@ jobs:
           coverage: none
       - name: Standalone conformance
         run: php tests/verify.php
+      - name: Standalone conformance with a partially disabled BCMath
+        run: |
+          php -d disable_functions=bcadd tests/verify.php
+          php -d disable_functions=bcscale tests/verify.php
       - name: Pure PHP fallback conformance
         run: php -n -d extension=json tests/verify.php
       - name: Backend parity probe

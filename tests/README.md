@@ -32,6 +32,8 @@ php -n -r 'printf("gmp=%s bcmath=%s\n", extension_loaded("gmp") ? "yes" : "no", 
 
 Use a runtime that reports `gmp=no bcmath=no` for genuine pure-PHP coverage, or force the backend through the parity test in `tests/PikaidBehaviorTest.php`. PHPUnit provides the maintained regression suite.
 
+The harness only exercises an arithmetic backend when every function that path calls is available. If an administrator has selectively disabled part of an extension through `disable_functions` (for example `bcadd` but not `bcscale`), the harness reports `BCMath no` and validates through the next available path instead of aborting:
+
 ## Porting the vectors
 
 Other language implementations may reuse `tests/vectors/pikaid-v1.json` and `tests/vectors/pikaid-v1.schema.json`. They must verify successful string-to-binary and binary-to-string conversions, timestamp/randomness extraction, and rejection of malformed or out-of-range values. Do not infer an identifier version from the vector filenames.

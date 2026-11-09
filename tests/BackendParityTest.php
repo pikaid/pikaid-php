@@ -72,16 +72,39 @@ final class BackendParityTest extends TestCase
     }
 
     /**
+     * A restricted runtime can disable individual internal functions without
+     * unloading the extension. The standalone harness must then skip a backend
+     * whose complete function set is unavailable instead of forcing it and
+     * calling a disabled function.
+     *
+     * Regression: the harness enumerated BCMath from bcscale(), which is not a
+     * function the BCMath conversion path calls. With only bcadd() disabled it
+     * still forced BCMath and aborted with "Call to undefined function bcadd()".
+     */
+    public function testStandaloneHarnessSkipsBackendsWithMissingFunctions(): void
+    {
+        $result = $this->runProbe(['bcadd'], 'verify.php');
+
+        self::assertSame(
+            0,
+            $result['exit'],
+            'standalone harness aborted with a partially disabled BCMath: ' . $result['stderr'] . $result['stdout']
+        );
+        self::assertSame(1, preg_match('/^PASS: \d+ checks \(PHP [^\n]*BCMath no\)$/m', trim($result['stdout'])), 'harness must report the pure/GMP path: ' . $result['stdout']);
+        self::assertStringNotContainsString('undefined function', $result['stdout'] . $result['stderr']);
+    }
+
+    /**
      * @param list<string> $disabledFunctions
      * @return array{exit: int, stdout: string, stderr: string}
      */
-    private function runProbe(array $disabledFunctions): array
+    private function runProbe(array $disabledFunctions, string $script = 'backends.php'): array
     {
         $command = [
             PHP_BINARY,
             '-d',
             'disable_functions=' . implode(',', $disabledFunctions),
-            __DIR__ . '/backends.php',
+            __DIR__ . '/' . $script,
         ];
 
         $descriptors = [
