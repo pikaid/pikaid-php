@@ -44,6 +44,80 @@ jobs:
         run: |
           php -n -r 'if (function_exists("gmp_import") || function_exists("bcadd")) { fwrite(STDERR, "GMP/BCMath unexpectedly available under php -n\n"); exit(1); } echo "GMP: no; BCMath: no\n";'
 
+  official-suite:
+    name: Official shared suite (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Check out the immutable pikaid-specs conformance suite
+        uses: actions/checkout@v4
+        with:
+          repository: pikaid/pikaid-specs
+          ref: 059780cc0e5b113443812720d95c630649bf3aa3
+          path: .ai/official-suite/pikaid-specs
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, dom, xml, xmlwriter, gmp, bcmath
+          coverage: none
+      - name: Verify the suite checkout, checksums and independent oracle
+        run: |
+          set -euo pipefail
+          SUITE="$GITHUB_WORKSPACE/.ai/official-suite/pikaid-specs/conformance"
+          test "$(git -C "$GITHUB_WORKSPACE/.ai/official-suite/pikaid-specs" rev-parse HEAD)" = "059780cc0e5b113443812720d95c630649bf3aa3"
+          (cd "$SUITE" && sha256sum -c SHA256SUMS)
+          python3 -m venv "$RUNNER_TEMP/pikaid-suite-venv"
+          "$RUNNER_TEMP/pikaid-suite-venv/bin/python" -m pip install --disable-pip-version-check jsonschema==4.26.0
+          (cd "$SUITE" && "$RUNNER_TEMP/pikaid-suite-venv/bin/python" tools/verify_vectors.py --expect-status OFFICIAL --expect-package-revision 1.0.0 --expect-spec-revision 1.0.4)
+          (cd "$SUITE" && "$RUNNER_TEMP/pikaid-suite-venv/bin/python" -m unittest discover -s tools/tests -v)
+          (cd "$SUITE" && node tools/verify_oracle_node.mjs)
+      - name: Official suite on the GMP backend
+        env:
+          PIKAID_EXPECT_BACKEND: gmp
+        run: |
+          set -euo pipefail
+          SUITE="$GITHUB_WORKSPACE/.ai/official-suite/pikaid-specs/conformance"
+          cd "$SUITE"
+          "$RUNNER_TEMP/pikaid-suite-venv/bin/python" tools/run_adapter.py --automated-only \
+            --report-json "$RUNNER_TEMP/official-${{ matrix.php }}-gmp.json" \
+            -- php "$GITHUB_WORKSPACE/tests/official/adapter.php"
+      - name: Official suite on the BCMath backend
+        env:
+          PIKAID_EXPECT_BACKEND: bcmath
+        run: |
+          set -euo pipefail
+          SUITE="$GITHUB_WORKSPACE/.ai/official-suite/pikaid-specs/conformance"
+          cd "$SUITE"
+          "$RUNNER_TEMP/pikaid-suite-venv/bin/python" tools/run_adapter.py --automated-only \
+            --report-json "$RUNNER_TEMP/official-${{ matrix.php }}-bcmath.json" \
+            -- php -d disable_functions=gmp_import,gmp_export,gmp_init,gmp_strval \
+            "$GITHUB_WORKSPACE/tests/official/adapter.php"
+      - name: Official suite on the pure-PHP backend
+        env:
+          PIKAID_EXPECT_BACKEND: pure
+        run: |
+          set -euo pipefail
+          SUITE="$GITHUB_WORKSPACE/.ai/official-suite/pikaid-specs/conformance"
+          cd "$SUITE"
+          "$RUNNER_TEMP/pikaid-suite-venv/bin/python" tools/run_adapter.py --automated-only \
+            --report-json "$RUNNER_TEMP/official-${{ matrix.php }}-pure.json" \
+            -- php -d disable_functions=gmp_import,gmp_export,gmp_init,gmp_strval,bcadd,bcmul,bccomp,bcmod,bcdiv \
+            "$GITHUB_WORKSPACE/tests/official/adapter.php"
+      - name: Upload official suite reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-suite-reports-php-${{ matrix.php }}
+          path: ${{ runner.temp }}/official-*.json
+          if-no-files-found: error
+
   coverage:
     name: Coverage gate (PHP 8.3)
     runs-on: ubuntu-latest
