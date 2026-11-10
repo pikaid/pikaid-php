@@ -1,18 +1,20 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/pikaid/pikaid-php/refs/heads/main/logo.png" alt="pikaid" width="300" />
+  <a href="https://github.com/pikaid/pikaid-specs">
+    <img src="https://raw.githubusercontent.com/pikaid/pikaid-specs/v1.0.4/logo.png" alt="pikaid — Small · Sortable · Secure IDs" width="300">
+  </a>
 </p>
-
 
 <p align="center">
   <strong>Small · Sortable · Secure ID generator</strong>
 </p>
 
-
 <div align="center">
 
-
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![PHP](https://img.shields.io/badge/PHP-modern-777bb4.svg)](#)
+[![PHP](https://img.shields.io/badge/language-PHP-777BB4.svg)](#%EF%B8%8F-requirements)
+[![CI](https://github.com/pikaid/pikaid-php/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/pikaid/pikaid-php/actions/workflows/ci.yml)
+[![Official implementation](https://img.shields.io/badge/official-implementation-2e7d32.svg)](https://github.com/pikaid/pikaid-specs)
+[![Specification 1.0.4](https://img.shields.io/badge/spec-1.0.4-4b56a6.svg)](https://github.com/pikaid/pikaid-specs/tree/v1.0.4)
 
 </div>
 
@@ -53,10 +55,17 @@ The binary representation uses **5 bytes for the timestamp** (unsigned 40-bit, b
 
 ## 📦 Installation
 
-Install via Composer:
+For the latest published version on Packagist:
 
 ```bash
 composer require pikaid/pikaid-php
+```
+
+To use the current, unreleased `main` API documented here, explicitly require the Git source instead of relying on the version currently indexed by Packagist:
+
+```bash
+composer config repositories.pikaid vcs https://github.com/pikaid/pikaid-php
+composer require pikaid/pikaid-php:dev-main
 ```
 
 Include Composer's autoloader in your project:
@@ -366,19 +375,6 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
 
 ---
 
-### 🔄 Order Guarantee
-
-Both `BINARY(17)` and `CHAR(26)` maintain **natural chronological order**:
-
-```php
-$id1 = Pikaid::generate();
-sleep(1);
-$id2 = Pikaid::generate();
-
-assert(strcmp($id1, $id2) < 0); // different timestamps: earlier sorts first
-assert(strcmp(Pikaid::toBinary($id1), Pikaid::toBinary($id2)) < 0); // Binary order too
-```
-
 ---
 
 ## ✅ Verification and release status
@@ -398,6 +394,28 @@ CI also runs the language-neutral suite from [pikaid-specs](https://github.com/p
 The suite runs with `--automated-only` against the GMP, BCMath and genuine pure-PHP paths. That flag deliberately skips the two manual CSPRNG review obligations, so an `--automated-only` exit code of `0` is **not** a conformance certification. Running the same suite without the flag exits `3` with `AUTOMATED_PASS_AUDIT_REQUIRED` while `P-GENERATE-RNG-SOURCE` and `P-GENERATE-RNG-FAILURE` remain `MANUAL_EVIDENCE_REQUIRED`; independent human review of those two points is still outstanding.
 
 The latest published tag is **`v1.2.0`**. Hardening committed to `main` after that tag is unreleased: no version bump, tag, or registry publication has been made. Install from a Git tag or a VCS repository until a new release is published.
+
+---
+
+## 🤝 Contributing
+
+Contributions are always welcome! 💙
+
+Whether you're fixing a typo, improving documentation, adding tests, or making pikaid even better, every contribution is appreciated.
+
+**Want to help? Here's how:**
+
+- 🐛 **Found a bug?** [Open an issue](https://github.com/pikaid/pikaid-php/issues) with steps to reproduce it.
+- 💡 **Have an idea?** Start with an issue before making major changes.
+- 🛠️ **Ready to contribute?** Open a pull request explaining the change.
+- 🧪 **Keep it tested.** Add meaningful regression tests for behavioral changes, and follow the existing conventions.
+- ✅ **Make sure CI passes.** All required checks must pass before a pull request is merged. No shortcuts!
+
+**One important rule:** pikaid's identifier format is immutable. Contributions must preserve the [canonical specification (revision 1.0.4)](https://github.com/pikaid/pikaid-specs/tree/v1.0.4).
+
+🔐 **Found a security vulnerability?** Please report it privately through GitHub's security reporting (when available) or [email the maintainer](mailto:larananas.dev@proton.me), not in a public issue.
+
+**Every improvement matters, big or small. Thanks for helping make pikaid better!** 🐇
 
 ---
 
